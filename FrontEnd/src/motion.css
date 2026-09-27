@@ -1,0 +1,407 @@
+/* Shared interaction/motion layer for the app, on top of index.css's design
+   tokens (--pitch, --amber, --paper, --font-display, etc — now aliased to
+   the CoverDrive navy/gold/teal palette). Kept as its own file rather than
+   folded into index.css so the diff for this pass stays easy to review.
+   Safe to import from multiple files — bundlers dedupe repeated CSS
+   imports of the same file. */
+
+/* ------------------------------------------------------------------
+   Scroll reveal — used for section/panel blocks across list & detail pages.
+   Upgraded from a plain fade+rise to a soft blur-in + scale for a more
+   premium, "coming into focus" feel.
+   ------------------------------------------------------------------ */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px) scale(0.98);
+  filter: blur(6px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease;
+  will-change: opacity, transform, filter;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* Card grids (Teams/Players) animate new cards in on mount/filter, not on
+   scroll — a plain entrance rather than an IntersectionObserver per card. */
+@keyframes cardPop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.card-pop {
+  animation: cardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: min(calc(var(--i, 0) * 35ms), 450ms);
+}
+
+/* ------------------------------------------------------------------
+   DataTable rows — a light cascade every time a table's rows mount
+   (first load, or a filter/tab swap bringing in a new row set)
+   ------------------------------------------------------------------ */
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.data-table tbody tr.row-reveal {
+  animation: rowIn 0.32s ease backwards;
+  animation-delay: min(calc(var(--i, 0) * 15ms), 600ms);
+}
+
+/* ------------------------------------------------------------------
+   Sliding tab / nav indicators
+   ------------------------------------------------------------------ */
+.tab-row.has-indicator {
+  position: relative;
+}
+
+.tab-row.has-indicator .tab-btn.active {
+  border-bottom-color: transparent;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: -2px;
+  height: 3px;
+  background: var(--amber);
+  box-shadow: 0 0 10px 0 rgba(244, 185, 63, 0.6);
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-row-compact {
+  border-bottom: none;
+  gap: 2px;
+}
+
+.tab-row-compact .tab-btn {
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+/* Top navbar gets the same sliding-underline language as page tabs */
+.nav-links {
+  position: relative;
+}
+
+.nav-indicator {
+  position: absolute;
+  bottom: -2px;
+  height: 2px;
+  background: var(--amber);
+  box-shadow: 0 0 8px 0 rgba(244, 185, 63, 0.55);
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease;
+}
+
+/* Season-switcher dropdown (SeasonStats) had no entrance styling before */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 120px;
+  background: var(--paper);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius);
+  box-shadow: 0 14px 32px -14px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 20;
+  animation: dropdownIn 0.18s ease;
+}
+
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nav-dropdown-item {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 2px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  transition: background 0.12s ease;
+}
+
+.nav-dropdown-item:hover {
+  background: rgba(244, 185, 63, 0.18);
+}
+
+/* ------------------------------------------------------------------
+   Tab content transition — plays once per switch (key={activeTab})
+   ------------------------------------------------------------------ */
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tab-panel {
+  animation: tabFadeIn 0.28s ease;
+}
+
+/* ------------------------------------------------------------------
+   Condensed sticky bar — shown on MatchDetail / PlayerDetail / TeamDetail
+   / SeasonStats once their hero scrolls out of view
+   ------------------------------------------------------------------ */
+.condensed-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: 2px solid var(--ink);
+  box-shadow: 0 10px 28px -16px rgba(0, 0, 0, 0.55);
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.condensed-bar.visible {
+  transform: translateY(0);
+}
+
+.condensed-bar-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 10px 28px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.condensed-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.condensed-sep {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 13px;
+  font-family: var(--font-body);
+  margin: 0 8px;
+}
+
+.condensed-meta {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding: 3px 9px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.condensed-bar .tab-row {
+  margin-left: auto;
+}
+
+.condensed-bar .nav-dropdown {
+  margin-left: auto;
+}
+
+/* ------------------------------------------------------------------
+   Summary tab (MatchDetail) — result banner + player-of-match spotlight
+   ------------------------------------------------------------------ */
+.summary-panel {
+  padding: 20px;
+}
+
+.summary-fixture {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 24px;
+  margin: 4px 0 2px;
+}
+
+.summary-team {
+  color: var(--ink-soft);
+}
+
+.summary-team.win {
+  color: var(--pitch);
+}
+
+.summary-vs {
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 14px;
+  font-family: var(--font-body);
+  margin: 0 10px;
+}
+
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  background: rgba(244, 185, 63, 0.14);
+  border: 1px solid rgba(244, 185, 63, 0.4);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--pitch);
+}
+
+.result-banner-icon {
+  font-size: 18px;
+}
+
+.potm-card {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 3px solid var(--amber);
+  padding: 8px 0 8px 14px;
+}
+
+.potm-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.potm-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--ink);
+}
+
+/* Innings score line (MatchDetail Scorecard tab) */
+.innings-score-figure {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 21px;
+  color: var(--pitch);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------
+   Over-by-over collapse (MatchDetail Deliveries tab) — animated height
+   + chevron, ball chips pop in with a stagger only when opened
+   ------------------------------------------------------------------ */
+.over-chevron {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 11px;
+  color: var(--amber-dim);
+  transition: transform 0.25s ease;
+}
+
+.over-header[aria-expanded='true'] .over-chevron {
+  transform: rotate(90deg);
+}
+
+.over-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.over-collapse.open {
+  grid-template-rows: 1fr;
+}
+
+.over-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+@keyframes chipIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.over-collapse.open .ball-chip {
+  animation: chipIn 0.3s ease backwards;
+  animation-delay: calc(var(--i, 0) * 25ms);
+}
+
+/* ------------------------------------------------------------------
+   Press feedback — a tiny, snappy scale-down on anything clickable that
+   opts in. Not applied automatically anywhere yet (no JSX changes needed
+   to use the rest of this file), but available for future buttons/links.
+   ------------------------------------------------------------------ */
+.press-fx {
+  transition: transform 0.12s ease;
+}
+.press-fx:active {
+  transform: scale(0.97);
+}
+
+/* ------------------------------------------------------------------
+   Accessibility: respect reduced-motion everywhere above
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .card-pop,
+  .data-table tbody tr.row-reveal,
+  .tab-indicator,
+  .nav-indicator,
+  .nav-dropdown-menu,
+  .condensed-bar,
+  .tab-panel,
+  .over-chevron,
+  .over-collapse,
+  .over-collapse.open .ball-chip,
+  .skeleton-row,
+  .press-fx {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}

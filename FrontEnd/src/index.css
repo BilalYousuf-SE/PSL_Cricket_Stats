@@ -1,0 +1,782 @@
+/* ============================================================
+   TOKENS — "CoverDrive": a night match under the floodlights.
+   Deep navy sky, warm paper scorecards, gold + teal light.
+   ============================================================ */
+:root {
+  --midnight: #060c1a;
+  --midnight-deep: #030712;
+  --navy: #0e1a34;
+  --navy-line: #22335c;
+  --paper: #faf6ec;
+  --paper-shade: #efe6d0;
+  --gold: #f4b93f;
+  --gold-dim: #c9930f;
+  --teal: #1fdcb5;
+  --teal-dim: #14a888;
+  --ball-red: #e13a4b;
+  --ink: #12141c;
+  --ink-soft: #4c5266;
+
+  --font-display: "Big Shoulders Display", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+
+  --radius: 6px;
+
+  /* legacy aliases kept so nothing else has to change */
+  --pitch: var(--midnight);
+  --pitch-dark: var(--midnight-deep);
+  --pitch-line: var(--navy-line);
+  --amber: var(--gold);
+  --amber-dim: var(--gold-dim);
+  --leather: var(--ball-red);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+html { scrollbar-color: var(--gold-dim) var(--midnight); }
+
+body {
+  margin: 0;
+  background: var(--midnight);
+  background-image:
+    radial-gradient(ellipse 1100px 620px at 12% -8%, rgba(244, 185, 63, 0.14), transparent 58%),
+    radial-gradient(ellipse 1000px 560px at 90% 2%, rgba(31, 220, 181, 0.10), transparent 58%),
+    radial-gradient(ellipse 900px 700px at 50% 115%, rgba(31, 220, 181, 0.06), transparent 60%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
+      transparent 1px,
+      transparent 64px
+    );
+  background-attachment: fixed;
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+/* thin, on-theme scrollbar (webkit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--midnight-deep); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gold-dim), var(--teal-dim));
+  border-radius: 8px;
+  border: 2px solid var(--midnight-deep);
+}
+
+/* ============================================================
+   LAYOUT SHELL
+   ============================================================ */
+.app-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 28px 80px;
+}
+
+/* ============================================================
+   NAVBAR — glass panel, animated gradient wordmark
+   ============================================================ */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid var(--navy-line);
+  margin-bottom: 36px;
+  background: rgba(6, 12, 26, 0.72);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.navbar::after {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--teal), transparent);
+  background-size: 200% 100%;
+  animation: floodSweep 7s linear infinite;
+  opacity: 0.7;
+}
+
+.navbar-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 28px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  background: linear-gradient(100deg, var(--gold) 0%, var(--teal) 50%, var(--gold) 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: floodSweep 6s linear infinite;
+}
+
+.brand span {
+  color: var(--ball-red);
+  -webkit-text-fill-color: var(--ball-red);
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.nav-link {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: rgba(250, 246, 236, 0.62);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.nav-link:hover {
+  color: var(--paper);
+  background: rgba(244, 185, 63, 0.08);
+}
+
+.nav-link.active {
+  color: var(--gold);
+}
+
+/* ============================================================
+   TYPE SCALE
+   ============================================================ */
+.page-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 46px;
+  line-height: 1.02;
+  color: var(--paper);
+  margin: 0 0 4px;
+  letter-spacing: 0.2px;
+}
+
+.page-subtitle {
+  color: rgba(250, 246, 236, 0.55);
+  font-size: 15px;
+  margin: 0 0 28px;
+  max-width: 62ch;
+}
+
+.section-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--gold);
+  margin: 0 0 12px;
+  letter-spacing: 0.2px;
+}
+
+/* ============================================================
+   SCORECARD PANEL — paper card, animated gold/teal top rule
+   ============================================================ */
+.scorecard {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: var(--radius);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 22px 48px -22px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+
+.scorecard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--teal), var(--gold));
+  background-size: 200% 100%;
+  animation: floodSweep 6s linear infinite;
+  z-index: 1;
+}
+
+.scorecard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--paper-shade);
+  border-bottom: 2px solid var(--ink);
+}
+
+.scorecard-header h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ink);
+}
+
+.scorecard-body {
+  padding: 4px 0;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.data-table thead th {
+  text-align: left;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  white-space: nowrap;
+}
+
+.data-table thead th.num,
+.data-table td.num {
+  text-align: right;
+}
+
+.data-table tbody td {
+  padding: 11px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  color: var(--ink);
+  position: relative;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr.clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr.clickable td:first-child {
+  box-shadow: inset 3px 0 0 0 transparent;
+  transition: box-shadow 0.15s ease;
+}
+
+.data-table tbody tr.clickable:hover {
+  background: rgba(244, 185, 63, 0.14);
+}
+
+.data-table tbody tr.clickable:hover td:first-child {
+  box-shadow: inset 3px 0 0 0 var(--gold);
+}
+
+.data-table .rank {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--gold-dim);
+  width: 36px;
+}
+
+.data-table .name-cell {
+  font-weight: 600;
+}
+
+.data-table .subtle {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.pill {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 2px;
+  background: rgba(14, 26, 52, 0.08);
+  color: var(--ink-soft);
+  border: 1px solid rgba(14,26,52,0.15);
+}
+
+.pill.win { background: rgba(20,168,136,0.12); color: var(--teal-dim); border-color: rgba(20,168,136,0.3); }
+.pill.loss { background: rgba(225,58,75,0.1); color: var(--ball-red); border-color: rgba(225,58,75,0.25); }
+
+/* ============================================================
+   HERO STAT NUMBERS
+   ============================================================ */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.stat-cell {
+  background: var(--paper);
+  padding: 18px 20px;
+  transition: background 0.2s ease;
+}
+
+.stat-cell:hover {
+  background: var(--paper-shade);
+}
+
+.stat-cell .stat-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  color: var(--midnight);
+  line-height: 1;
+  display: block;
+}
+
+.stat-cell .stat-label {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin-top: 6px;
+  display: block;
+}
+
+/* ============================================================
+   HERO BANNER (Dashboard)
+   ============================================================ */
+.hero-banner {
+  position: relative;
+  padding: 8px 0 4px;
+  margin-bottom: 8px;
+}
+
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 10px;
+}
+
+.hero-kicker::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 0 rgba(244, 185, 63, 0.6);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   GRID / DASHBOARD PANELS
+   ============================================================ */
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+@media (max-width: 860px) {
+  .panel-grid { grid-template-columns: 1fr; }
+  .page-title { font-size: 34px; }
+  .navbar-inner { flex-direction: column; align-items: flex-start; }
+}
+
+/* ============================================================
+   CARDS (teams / players grid)
+   ============================================================ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.entity-card {
+  background: var(--paper);
+  border-radius: var(--radius);
+  border-left: 4px solid var(--gold);
+  padding: 16px 18px;
+  box-shadow: 0 10px 24px -16px rgba(0,0,0,0.5);
+  transition: transform 0.18s cubic-bezier(.2,.9,.3,1.3), box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.entity-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 40px -16px rgba(244,185,63,0.25), 0 10px 22px -10px rgba(0,0,0,0.55);
+  border-left-color: var(--teal);
+}
+
+.entity-card h4 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.entity-card .meta {
+  color: var(--ink-soft);
+  font-size: 13px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.entity-card .meta b {
+  color: var(--midnight);
+  font-family: var(--font-display);
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+.controls-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.control-input,
+.control-select {
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(250,246,236,0.25);
+  background: rgba(250,246,236,0.06);
+  color: var(--paper);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.control-input::placeholder { color: rgba(250,246,236,0.4); }
+
+.control-input:hover,
+.control-select:hover {
+  border-color: rgba(244,185,63,0.5);
+}
+
+.control-input:focus,
+.control-select:focus,
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.control-select option {
+  background: var(--midnight);
+  color: var(--paper);
+}
+
+/* ============================================================
+   STATES: loading / error / empty
+   ============================================================ */
+.state-block {
+  padding: 46px 20px;
+  text-align: left;
+  color: rgba(250,246,236,0.65);
+  border: 1px dashed rgba(250,246,236,0.25);
+  border-radius: var(--radius);
+}
+
+.state-block.error {
+  border-color: rgba(225,58,75,0.5);
+  color: #f3c1c7;
+}
+
+.state-block .state-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--paper);
+  margin: 0 0 6px;
+}
+
+.state-block.error .state-title { color: #f3a3ac; }
+
+.skeleton-row {
+  height: 14px;
+  background: linear-gradient(90deg, rgba(250,246,236,0.06), rgba(244,185,63,0.18), rgba(250,246,236,0.06));
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 2px;
+  margin-bottom: 10px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+   TABS (match detail)
+   ============================================================ */
+.tab-row {
+  display: flex;
+  border-bottom: 2px solid var(--ink);
+  gap: 2px;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  padding: 10px 18px;
+  background: var(--paper-shade);
+  border: none;
+  color: var(--ink-soft);
+  border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tab-btn:hover {
+  color: var(--midnight);
+  background: rgba(244,185,63,0.16);
+}
+
+.tab-btn.active {
+  color: var(--midnight);
+  background: var(--paper);
+  border-bottom-color: var(--gold);
+}
+
+/* ============================================================
+   DELIVERIES (collapsible ball-by-ball)
+   ============================================================ */
+.over-block {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.over-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.over-header .over-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--midnight);
+  margin-right: 12px;
+}
+
+.over-summary {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+}
+
+.over-runs {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--gold-dim);
+}
+
+.ball-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 16px;
+}
+
+.ball-chip {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 50%;
+  background: var(--midnight);
+  color: var(--paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+
+.ball-chip:hover { transform: scale(1.12); }
+.ball-chip.wicket { background: var(--ball-red); }
+.ball-chip.boundary { background: var(--gold); color: var(--ink); }
+
+/* ============================================================
+   SQUAD — two-column team split
+   ============================================================ */
+.squad-columns {
+  display: flex;
+  align-items: stretch;
+}
+
+.squad-column {
+  flex: 1;
+  min-width: 220px;
+  padding-bottom: 8px;
+}
+
+.squad-column h4 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--midnight);
+  margin: 0 0 6px;
+  padding: 14px 20px 0;
+}
+
+.squad-column-divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 14px 0;
+}
+
+.squad-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.squad-list li {
+  padding: 9px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ============================================================
+   INNINGS SCORECARD BLOCK
+   ============================================================ */
+.innings-block + .innings-block {
+  border-top: 2px solid var(--ink);
+}
+
+.innings-heading {
+  padding: 16px 20px 4px;
+}
+
+.innings-heading h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--midnight);
+  margin: 0;
+}
+
+.innings-heading .innings-score {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.innings-subheading {
+  padding: 12px 20px 4px;
+}
+
+.innings-subheading h5 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--gold-dim);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.innings-empty {
+  padding: 0 20px 16px;
+}
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--gold);
+  border-bottom: 1px solid transparent;
+  transition: gap 0.15s ease;
+}
+.back-link:hover { border-bottom-color: var(--gold); gap: 9px; }
+
+.section-spacer { margin-top: 32px; }
+
+.footnote {
+  margin-top: 48px;
+  padding-top: 16px;
+  border-top: 1px solid var(--navy-line);
+  font-size: 12.5px;
+  color: rgba(250,246,236,0.4);
+}
+
+/* ============================================================
+   KEYFRAMES shared by the tokens above
+   ============================================================ */
+@keyframes floodSweep {
+  to { background-position: 200% 0; }
+}
+
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 rgba(244, 185, 63, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(244, 185, 63, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 185, 63, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar::after,
+  .brand,
+  .scorecard::before,
+  .hero-kicker::before {
+    animation: none !important;
+  }
+}

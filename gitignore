@@ -1,0 +1,21 @@
+# --- Backend (Maven / Spring Boot) ---
+Backend/target/
+Backend/.mvn/
+**/*.class
+Backend/application-local.properties
+Backend/.env
+
+# --- Frontend (Node / Vite) ---
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.env
+Frontend/.env.local
+
+# --- Docker ---
+.env
+
+# --- IDE / OS ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
