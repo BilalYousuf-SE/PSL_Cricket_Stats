@@ -7,6 +7,7 @@ import com.cricket.stats.dto.WicketTakerDTO;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,10 @@ import java.util.List;
 
 @Repository
 public interface ScorecardBowlerRepository extends JpaRepository<ScorecardBowler, ScorecardBowlerId> {
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM ScorecardBowler row WHERE row.match.matchId = :matchId")
+    void deleteByMatchId(@Param("matchId") Integer matchId);
 
     // --- Derived Queries ---
 

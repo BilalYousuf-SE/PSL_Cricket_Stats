@@ -3,6 +3,7 @@ package com.cricket.stats.controller;
 import com.cricket.stats.service.SeasonService;
 import com.cricket.stats.service.StatsService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import com.cricket.stats.dto.*;
 
@@ -66,12 +67,12 @@ public class SeasonController {
     }
 
     @PostMapping
-    public SeasonDTO createSeason(@RequestBody SeasonDTO dto) {
+    public SeasonDTO createSeason(@Valid @RequestBody SeasonDTO dto) {
         return seasonService.createSeason(dto);
     }
 
     @PutMapping("/{id}")
-    public SeasonDTO updateSeason(@PathVariable Integer id, @RequestBody SeasonDTO dto) {
+    public SeasonDTO updateSeason(@PathVariable Integer id, @Valid @RequestBody SeasonDTO dto) {
         return seasonService.updateSeason(id, dto);
     }
 

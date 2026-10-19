@@ -1,24 +1,52 @@
 package com.cricket.stats.service;
 
-import com.cricket.stats.entity.*;
 import com.cricket.stats.ID.MatchSquadId;
-import com.cricket.stats.repository.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import com.cricket.stats.dto.*;
-import com.cricket.stats.mapper.*;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import com.cricket.stats.dto.DeliveryDTO;
+import com.cricket.stats.dto.InningsExtrasDTO;
+import com.cricket.stats.dto.DeliveryRequestDTO;
+import com.cricket.stats.dto.MatchDTO;
+import com.cricket.stats.dto.MatchRequestDTO;
+import com.cricket.stats.dto.MatchSquadDTO;
+import com.cricket.stats.dto.MatchSquadRequestDTO;
+import com.cricket.stats.dto.PlayerMatchDTO;
+import com.cricket.stats.dto.ScorecardBatterDTO;
+import com.cricket.stats.dto.ScorecardBowlerDTO;
+import com.cricket.stats.entity.Delivery;
+import com.cricket.stats.entity.Match;
+import com.cricket.stats.entity.MatchFormat;
+import com.cricket.stats.entity.MatchSquad;
+import com.cricket.stats.entity.Player;
+import com.cricket.stats.entity.Team;
+import com.cricket.stats.mapper.DeliveryMapper;
+import com.cricket.stats.mapper.MatchMapper;
+import com.cricket.stats.mapper.MatchSquadMapper;
+import com.cricket.stats.mapper.PlayerMatchMapper;
+import com.cricket.stats.mapper.ScorecardBatterMapper;
+import com.cricket.stats.mapper.ScorecardBowlerMapper;
+import com.cricket.stats.repository.DeliveryRepository;
+import com.cricket.stats.repository.MatchRepository;
+import com.cricket.stats.repository.MatchSquadRepository;
+import com.cricket.stats.repository.PlayerRepository;
+import com.cricket.stats.repository.ScorecardBatterRepository;
+import com.cricket.stats.repository.ScorecardBowlerRepository;
+import com.cricket.stats.repository.SeasonRepository;
+import com.cricket.stats.repository.TeamRepository;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MatchService {
 
+    private final ScorecardCalculator scorecardCalculator;
     private final MatchRepository matchRepository;
     private final MatchSquadRepository matchSquadRepository;
     private final ScorecardBatterRepository batterRepository;
@@ -38,7 +66,7 @@ public class MatchService {
     public MatchDTO getMatchById(Integer id) {
         return matchRepository.findById(id)
                 .map(MatchMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Match not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Match not found"));
     }
 
     public List<MatchDTO> getMatchesByFormat(MatchFormat format) {
@@ -119,24 +147,41 @@ public class MatchService {
                 .toList();
     }
 
+    public List<InningsExtrasDTO> getExtrasByInnings(Integer matchId) {
+        Map<Integer, List<DeliveryDTO>> innings = getDeliveries(matchId).stream()
+                .collect(java.util.stream.Collectors.groupingBy(DeliveryDTO::getInnings));
+        return innings.entrySet().stream().map(entry -> {
+            long total = entry.getValue().stream().mapToLong(DeliveryDTO::getRunsExtras).sum();
+            Map<String, Long> byType = entry.getValue().stream()
+                    .filter(ball -> ball.getExtrasType() != null && !ball.getExtrasType().isBlank()
+                            && ball.getRunsExtras() > 0)
+                    .collect(java.util.stream.Collectors.groupingBy(DeliveryDTO::getExtrasType,
+                            java.util.stream.Collectors.summingLong(DeliveryDTO::getRunsExtras)));
+            return new InningsExtrasDTO(entry.getKey(), total, byType);
+        }).sorted(java.util.Comparator.comparing(InningsExtrasDTO::getInnings)).toList();
+    }
+
     // ---------------- Match CRUD ----------------
 
+    @Transactional
     public MatchDTO createMatch(MatchRequestDTO request) {
         Match match = new Match();
         applyMatchRequest(match, request);
         return MatchMapper.toDTO(matchRepository.save(match));
     }
 
+    @Transactional
     public MatchDTO updateMatch(Integer id, MatchRequestDTO request) {
         Match match = matchRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Match not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Match not found"));
         applyMatchRequest(match, request);
         return MatchMapper.toDTO(matchRepository.save(match));
     }
 
+    @Transactional
     public void deleteMatch(Integer id) {
         if (!matchRepository.existsById(id)) {
-            throw new RuntimeException("Match not found");
+            throw new ResponseStatusException(NOT_FOUND, "Match not found");
         }
         matchRepository.deleteById(id);
     }
@@ -149,41 +194,48 @@ public class MatchService {
         match.setResultMargin(request.getResultMargin());
         match.setResultType(request.getResultType());
 
-        if (request.getTeamAId() != null) {
-            match.setTeamA(teamRepository.findById(request.getTeamAId())
-                    .orElseThrow(() -> new RuntimeException("Team A not found")));
+        if (request.getTeamAId().equals(request.getTeamBId())) {
+            throw new ResponseStatusException(BAD_REQUEST, "A match requires two different teams");
         }
-        if (request.getTeamBId() != null) {
-            match.setTeamB(teamRepository.findById(request.getTeamBId())
-                    .orElseThrow(() -> new RuntimeException("Team B not found")));
-        }
-        if (request.getTossWinnerId() != null) {
-            match.setTossWinner(teamRepository.findById(request.getTossWinnerId())
-                    .orElseThrow(() -> new RuntimeException("Toss-winning team not found")));
-        }
-        if (request.getWinnerId() != null) {
-            match.setWinner(teamRepository.findById(request.getWinnerId())
-                    .orElseThrow(() -> new RuntimeException("Winning team not found")));
-        }
-        if (request.getSeasonId() != null) {
-            match.setSeason(seasonRepository.findById(request.getSeasonId())
-                    .orElseThrow(() -> new RuntimeException("Season not found")));
-        }
-        if (request.getPlayerOfMatchId() != null) {
-            match.setPlayerOfMatch(playerRepository.findById(request.getPlayerOfMatchId())
-                    .orElseThrow(() -> new RuntimeException("Player of the match not found")));
+        match.setTeamA(teamRepository.findById(request.getTeamAId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team A not found")));
+        match.setTeamB(teamRepository.findById(request.getTeamBId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team B not found")));
+        match.setSeason(seasonRepository.findById(request.getSeasonId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Season not found")));
+        validateMatchTeam(request.getWinnerId(), request, "Winner");
+        validateMatchTeam(request.getTossWinnerId(), request, "Toss winner");
+        match.setWinner(request.getWinnerId() == null ? null
+                : teamRepository.findById(request.getWinnerId()).orElseThrow());
+        match.setTossWinner(request.getTossWinnerId() == null ? null
+                : teamRepository.findById(request.getTossWinnerId()).orElseThrow());
+        match.setPlayerOfMatch(request.getPlayerOfMatchId() == null ? null
+                : playerRepository.findById(request.getPlayerOfMatchId())
+                        .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Player of the match not found")));
+    }
+
+    private void validateMatchTeam(Integer teamId, MatchRequestDTO request, String label) {
+        if (teamId != null && !teamId.equals(request.getTeamAId()) && !teamId.equals(request.getTeamBId())) {
+            throw new ResponseStatusException(BAD_REQUEST, label + " must be one of the match teams");
         }
     }
 
     // ---------------- Match Squad CRUD ----------------
 
+    @Transactional
     public MatchSquadDTO addSquadMember(Integer matchId, MatchSquadRequestDTO request) {
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new RuntimeException("Match not found"));
+        Match match = lockMatch(matchId);
+        if (request.getPlayerId() == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "Player ID is required");
+        }
+        if (matchSquadRepository.existsById(squadId(matchId, request.getPlayerId()))) {
+            throw new ResponseStatusException(CONFLICT, "This player is already in the match squad");
+        }
+        validateSquadTeam(match, request.getTeamId());
         Player player = playerRepository.findById(request.getPlayerId())
-                .orElseThrow(() -> new RuntimeException("Player not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Player not found"));
         Team team = teamRepository.findById(request.getTeamId())
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team not found"));
 
         MatchSquad squad = new MatchSquad();
         squad.setMatch(match);
@@ -196,16 +248,16 @@ public class MatchService {
         return MatchSquadMapper.toDTO(matchSquadRepository.save(squad));
     }
 
+    @Transactional
     public MatchSquadDTO updateSquadMember(Integer matchId, Long playerId, MatchSquadRequestDTO request) {
-        MatchSquadId id = new MatchSquadId();
-        id.setMatch(matchId);
-        id.setPlayer(playerId);
+        MatchSquadId id = squadId(matchId, playerId);
         MatchSquad squad = matchSquadRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Squad entry not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Squad entry not found"));
 
         if (request.getTeamId() != null) {
+            validateSquadTeam(squad.getMatch(), request.getTeamId());
             squad.setTeam(teamRepository.findById(request.getTeamId())
-                    .orElseThrow(() -> new RuntimeException("Team not found")));
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team not found")));
         }
         if (request.getIsCaptain() != null) squad.setIsCaptain(request.getIsCaptain());
         if (request.getIsKeeper() != null) squad.setIsKeeper(request.getIsKeeper());
@@ -214,21 +266,34 @@ public class MatchService {
         return MatchSquadMapper.toDTO(matchSquadRepository.save(squad));
     }
 
+    @Transactional
     public void removeSquadMember(Integer matchId, Long playerId) {
-        MatchSquadId id = new MatchSquadId();
-        id.setMatch(matchId);
-        id.setPlayer(playerId);
+        MatchSquadId id = squadId(matchId, playerId);
         if (!matchSquadRepository.existsById(id)) {
-            throw new RuntimeException("Squad entry not found");
+            throw new ResponseStatusException(NOT_FOUND, "Squad entry not found");
         }
         matchSquadRepository.deleteById(id);
     }
 
+    private MatchSquadId squadId(Integer matchId, Long playerId) {
+        MatchSquadId id = new MatchSquadId();
+        id.setMatch(matchId);
+        id.setPlayer(playerId);
+        return id;
+    }
+
+    private void validateSquadTeam(Match match, Integer teamId) {
+        if (teamId == null || (!teamId.equals(match.getTeamA().getTeamId())
+                && !teamId.equals(match.getTeamB().getTeamId()))) {
+            throw new ResponseStatusException(BAD_REQUEST, "Squad team must be one of the match teams");
+        }
+    }
+
     // ---------------- Delivery CRUD (scorecards auto-rebuild after each) ----------------
 
+    @Transactional
     public DeliveryDTO addDelivery(Integer matchId, DeliveryRequestDTO request) {
-        Match match = matchRepository.findById(matchId)
-                .orElseThrow(() -> new RuntimeException("Match not found"));
+        Match match = lockMatch(matchId);
 
         Delivery delivery = new Delivery();
         delivery.setMatch(match);
@@ -239,11 +304,13 @@ public class MatchService {
         return saved;
     }
 
+    @Transactional
     public DeliveryDTO updateDelivery(Integer matchId, Long deliveryId, DeliveryRequestDTO request) {
+        lockMatch(matchId);
         Delivery delivery = deliveryRepository.findById(deliveryId)
-                .orElseThrow(() -> new RuntimeException("Delivery not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Delivery not found"));
         if (!delivery.getMatch().getMatchId().equals(matchId)) {
-            throw new RuntimeException("Delivery does not belong to this match");
+            throw new ResponseStatusException(BAD_REQUEST, "Delivery does not belong to this match");
         }
         applyDeliveryRequest(delivery, request);
         DeliveryDTO saved = DeliveryMapper.toDTO(deliveryRepository.save(delivery));
@@ -252,47 +319,54 @@ public class MatchService {
         return saved;
     }
 
+    @Transactional
     public void deleteDelivery(Integer matchId, Long deliveryId) {
+        lockMatch(matchId);
         Delivery delivery = deliveryRepository.findById(deliveryId)
-                .orElseThrow(() -> new RuntimeException("Delivery not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Delivery not found"));
         if (!delivery.getMatch().getMatchId().equals(matchId)) {
-            throw new RuntimeException("Delivery does not belong to this match");
+            throw new ResponseStatusException(BAD_REQUEST, "Delivery does not belong to this match");
         }
         deliveryRepository.deleteById(deliveryId);
 
         recalculateScorecardsForMatch(matchId);
     }
 
+    private Match lockMatch(Integer matchId) {
+        return matchRepository.findForUpdate(matchId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Match not found"));
+    }
+
     private void applyDeliveryRequest(Delivery delivery, DeliveryRequestDTO request) {
         delivery.setInnings(request.getInnings());
         delivery.setOverNum(request.getOverNum());
         delivery.setBallNum(request.getBallNum());
-        delivery.setRunsBatter(request.getRunsBatter());
-        delivery.setRunsExtras(request.getRunsExtras());
+        delivery.setRunsBatter(request.getRunsBatter() == null ? 0 : request.getRunsBatter());
+        delivery.setRunsExtras(request.getRunsExtras() == null ? 0 : request.getRunsExtras());
         delivery.setExtraType(request.getExtraType());
         delivery.setWicketType(request.getWicketType());
 
         if (request.getBatterId() != null) {
             delivery.setBatter(playerRepository.findById(request.getBatterId())
-                    .orElseThrow(() -> new RuntimeException("Batter not found")));
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Batter not found")));
         } else {
             delivery.setBatter(null);
         }
         if (request.getNonStrikerId() != null) {
             delivery.setNonStriker(playerRepository.findById(request.getNonStrikerId())
-                    .orElseThrow(() -> new RuntimeException("Non-striker not found")));
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Non-striker not found")));
         } else {
             delivery.setNonStriker(null);
         }
         if (request.getBowlerId() != null) {
             delivery.setBowler(playerRepository.findById(request.getBowlerId())
-                    .orElseThrow(() -> new RuntimeException("Bowler not found")));
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Bowler not found")));
         } else {
             delivery.setBowler(null);
         }
         if (request.getPlayerDismissedId() != null) {
             delivery.setPlayerDismissed(playerRepository.findById(request.getPlayerDismissedId())
-                    .orElseThrow(() -> new RuntimeException("Dismissed player not found")));
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Dismissed player not found")));
         } else {
             delivery.setPlayerDismissed(null);
         }
@@ -308,134 +382,14 @@ public class MatchService {
         List<Delivery> deliveries = deliveryRepository
                 .findByMatchMatchIdOrderByInningsAscOverNumAscBallNumAsc(matchId);
 
-        batterRepository.deleteAll(batterRepository.findByMatchIdWithDetails(matchId));
-        bowlerRepository.deleteAll(bowlerRepository.findByMatchIdWithDetails(matchId));
+        batterRepository.deleteByMatchId(matchId);
+        bowlerRepository.deleteByMatchId(matchId);
 
         if (deliveries.isEmpty()) return;
 
         Match match = deliveries.get(0).getMatch();
-        rebuildBattingScorecard(match, deliveries);
-        rebuildBowlingScorecard(match, deliveries);
+        batterRepository.saveAll(scorecardCalculator.batting(match, deliveries));
+        bowlerRepository.saveAll(scorecardCalculator.bowling(match, deliveries));
     }
 
-    private void rebuildBattingScorecard(Match match, List<Delivery> deliveries) {
-        LinkedHashMap<Long, Player> order = new LinkedHashMap<>();
-        Map<Long, int[]> stats = new HashMap<>(); // playerId -> [runs, ballsFaced, fours, sixes]
-        Map<Long, Delivery> dismissalBall = new HashMap<>();
-
-        for (Delivery d : deliveries) {
-            Player batter = d.getBatter();
-            if (batter == null) continue;
-            Long pid = batter.getId();
-            order.putIfAbsent(pid, batter);
-            int[] s = stats.computeIfAbsent(pid, k -> new int[4]);
-
-            boolean isWide = containsIgnoreCase(d.getExtraType(), "wide");
-            int runsBatter = nz(d.getRunsBatter());
-
-            if (!isWide) s[1]++; // balls faced (wides aren't faced by the batter)
-            s[0] += runsBatter;
-            if (runsBatter == 4) s[2]++;
-            if (runsBatter == 6) s[3]++;
-
-            if (d.getWicketType() != null && d.getPlayerDismissed() != null) {
-                dismissalBall.put(d.getPlayerDismissed().getId(), d);
-            }
-        }
-
-        int position = 1;
-        for (Map.Entry<Long, Player> entry : order.entrySet()) {
-            Long pid = entry.getKey();
-            Player player = entry.getValue();
-            int[] s = stats.get(pid);
-
-            ScorecardBatter row = new ScorecardBatter();
-            row.setMatch(match);
-            row.setPlayer(player);
-            row.setRuns(s[0]);
-            row.setBallsFaced(s[1]);
-            row.setFours(s[2]);
-            row.setSixes(s[3]);
-            row.setBattingPosition(position++);
-
-            Delivery dismissal = dismissalBall.get(pid);
-            row.setIsOut(dismissal != null);
-            row.setOutDescription(dismissal != null ? dismissal.getWicketType() : null);
-
-            batterRepository.save(row);
-        }
-    }
-
-    private void rebuildBowlingScorecard(Match match, List<Delivery> deliveries) {
-        LinkedHashMap<Long, Player> order = new LinkedHashMap<>();
-        Map<Long, int[]> legalBallsAndWickets = new HashMap<>(); // [legalBalls, wickets]
-        Map<Long, Integer> runsConceded = new HashMap<>();
-        Map<Long, Map<String, int[]>> overRuns = new HashMap<>(); // bowlerId -> "innings:over" -> [runsInOver]
-
-        for (Delivery d : deliveries) {
-            Player bowler = d.getBowler();
-            if (bowler == null) continue;
-            Long pid = bowler.getId();
-            order.putIfAbsent(pid, bowler);
-
-            boolean isWide = containsIgnoreCase(d.getExtraType(), "wide");
-            boolean isNoBall = containsIgnoreCase(d.getExtraType(), "no ball")
-                    || containsIgnoreCase(d.getExtraType(), "noball");
-            boolean isBye = containsIgnoreCase(d.getExtraType(), "bye"); // covers bye + leg bye
-
-            int[] lw = legalBallsAndWickets.computeIfAbsent(pid, k -> new int[2]);
-            if (!isWide && !isNoBall) lw[0]++;
-
-            int chargedToBowler = nz(d.getRunsBatter()) + (isBye ? 0 : nz(d.getRunsExtras()));
-            runsConceded.merge(pid, chargedToBowler, Integer::sum);
-
-            if (d.getWicketType() != null && !containsIgnoreCase(d.getWicketType(), "run out")) {
-                lw[1]++;
-            }
-
-            String overKey = d.getInnings() + ":" + d.getOverNum();
-            Map<String, int[]> overs = overRuns.computeIfAbsent(pid, k -> new HashMap<>());
-            overs.computeIfAbsent(overKey, k -> new int[1])[0] += chargedToBowler;
-        }
-
-        for (Map.Entry<Long, Player> entry : order.entrySet()) {
-            Long pid = entry.getKey();
-            Player player = entry.getValue();
-            int[] lw = legalBallsAndWickets.get(pid);
-            int legalBalls = lw[0];
-            int wickets = lw[1];
-            int runs = runsConceded.getOrDefault(pid, 0);
-
-            int completedOvers = legalBalls / 6;
-            int remainingBalls = legalBalls % 6;
-            BigDecimal oversBowled = new BigDecimal(completedOvers + "." + remainingBalls);
-
-            long maidens = overRuns.getOrDefault(pid, Map.of()).values().stream()
-                    .filter(o -> o[0] == 0)
-                    .count();
-
-            BigDecimal economy = legalBalls > 0
-                    ? BigDecimal.valueOf(runs).divide(BigDecimal.valueOf(legalBalls / 6.0), 2, RoundingMode.HALF_UP)
-                    : BigDecimal.ZERO;
-
-            ScorecardBowler row = new ScorecardBowler();
-            row.setMatch(match);
-            row.setPlayer(player);
-            row.setOversBowled(oversBowled);
-            row.setMaidens((int) maidens);
-            row.setRunsConceded(runs);
-            row.setWickets(wickets);
-            row.setEconomy(economy);
-
-            bowlerRepository.save(row);
-        }
-    }
-
-    private static boolean containsIgnoreCase(String s, String needle) {
-        return s != null && s.toLowerCase().contains(needle.toLowerCase());
-    }
-
-    private static int nz(Integer i) {
-        return i == null ? 0 : i;
-    }
 }

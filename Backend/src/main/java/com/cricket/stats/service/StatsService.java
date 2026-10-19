@@ -1,22 +1,31 @@
 package com.cricket.stats.service;
-import org.springframework.data.domain.PageRequest;
 
+import com.cricket.stats.dto.PlayerOfMatchDTO;
+import com.cricket.stats.dto.RunScorerDTO;
+import com.cricket.stats.dto.ScorecardBatterDTO;
+import com.cricket.stats.dto.ScorecardBowlerDTO;
+import com.cricket.stats.dto.StrikeRateDTO;
+import com.cricket.stats.dto.TeamLeaderboardDTO;
+import com.cricket.stats.dto.WicketTakerDTO;
 import com.cricket.stats.entity.ScorecardBatter;
 import com.cricket.stats.entity.ScorecardBowler;
+import com.cricket.stats.mapper.ScorecardBatterMapper;
+import com.cricket.stats.mapper.ScorecardBowlerMapper;
 import com.cricket.stats.repository.PlayerRepository;
 import com.cricket.stats.repository.ScorecardBatterRepository;
 import com.cricket.stats.repository.ScorecardBowlerRepository;
 import com.cricket.stats.repository.TeamRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import com.cricket.stats.dto.*;
-import com.cricket.stats.mapper.*;
-
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class StatsService {
+
+    private static final Pageable TOP_RECORDS = PageRequest.of(0, 10);
 
     private final PlayerRepository playerRepository;
     private final TeamRepository teamRepository;
@@ -48,28 +57,28 @@ public class StatsService {
     }
 
     public List<ScorecardBatterDTO> getHighestScores() {
-        List<ScorecardBatter> result = batterRepository.findHighestScores(PageRequest.of(0, 10));
+        List<ScorecardBatter> result = batterRepository.findHighestScores(TOP_RECORDS);
         return result.stream()
                 .map(ScorecardBatterMapper::toDTO)
                 .toList();
     }
 
     public List<ScorecardBatterDTO> getHighestScores(Integer year) {
-        List<ScorecardBatter> result = batterRepository.findHighestScoresBySeason(year, PageRequest.of(0, 10));
+        List<ScorecardBatter> result = batterRepository.findHighestScoresBySeason(year, TOP_RECORDS);
         return result.stream()
                 .map(ScorecardBatterMapper::toDTO)
                 .toList();
     }
 
     public List<ScorecardBowlerDTO> getBestBowlingFigures() {
-        List<ScorecardBowler> result = bowlerRepository.findBestBowlingFigures(PageRequest.of(0, 10));
+        List<ScorecardBowler> result = bowlerRepository.findBestBowlingFigures(TOP_RECORDS);
         return result.stream()
                 .map(ScorecardBowlerMapper::toDTO)
                 .toList();
     }
 
     public List<ScorecardBowlerDTO> getBestBowlingFigures(Integer year) {
-        List<ScorecardBowler> result = bowlerRepository.findBestBowlingFiguresBySeason(year, PageRequest.of(0, 10));
+        List<ScorecardBowler> result = bowlerRepository.findBestBowlingFiguresBySeason(year, TOP_RECORDS);
         return result.stream()
                 .map(ScorecardBowlerMapper::toDTO)
                 .toList();
@@ -83,6 +92,6 @@ public class StatsService {
     // across every innings they played that season) rather than a single
     // best innings.
     public List<StrikeRateDTO> getTopStrikeRates(Integer year) {
-        return batterRepository.findTopStrikeRatesBySeason(year, PageRequest.of(0, 10));
+        return batterRepository.findTopStrikeRatesBySeason(year, TOP_RECORDS);
     }
 }

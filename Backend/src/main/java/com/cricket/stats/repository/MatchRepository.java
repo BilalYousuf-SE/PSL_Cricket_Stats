@@ -6,6 +6,9 @@ import com.cricket.stats.entity.MatchSquad;
 import com.cricket.stats.entity.ResultType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +17,10 @@ import java.util.List;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Integer> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Match m WHERE m.matchId = :matchId")
+    Optional<Match> findForUpdate(@Param("matchId") Integer matchId);
 
     // --- Derived Queries ---
 

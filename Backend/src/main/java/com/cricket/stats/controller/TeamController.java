@@ -2,6 +2,7 @@ package com.cricket.stats.controller;
 
 import com.cricket.stats.service.TeamService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import com.cricket.stats.dto.*;
 
@@ -40,12 +41,12 @@ public class TeamController {
     }
 
     @PostMapping
-    public TeamDTO createTeam(@RequestBody TeamDTO dto) {
+    public TeamDTO createTeam(@Valid @RequestBody TeamDTO dto) {
         return teamService.createTeam(dto);
     }
 
     @PutMapping("/{id}")
-    public TeamDTO updateTeam(@PathVariable Integer id, @RequestBody TeamDTO dto) {
+    public TeamDTO updateTeam(@PathVariable Integer id, @Valid @RequestBody TeamDTO dto) {
         return teamService.updateTeam(id, dto);
     }
 

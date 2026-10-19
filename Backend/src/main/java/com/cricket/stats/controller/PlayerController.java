@@ -4,6 +4,7 @@ import com.cricket.stats.entity.Roles;
 import com.cricket.stats.service.PlayerService;
 import com.cricket.stats.service.MatchService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import com.cricket.stats.dto.BattingStatsDTO;
@@ -72,12 +73,12 @@ public class PlayerController {
     }
 
     @PostMapping
-    public PlayerDTO createPlayer(@RequestBody PlayerDTO dto) {
+    public PlayerDTO createPlayer(@Valid @RequestBody PlayerDTO dto) {
         return playerService.createPlayer(dto);
     }
 
     @PutMapping("/{id}")
-    public PlayerDTO updatePlayer(@PathVariable Long id, @RequestBody PlayerDTO dto) {
+    public PlayerDTO updatePlayer(@PathVariable Long id, @Valid @RequestBody PlayerDTO dto) {
         return playerService.updatePlayer(id, dto);
     }
 

@@ -1,9 +1,4 @@
-// Accessors matched to the real backend DTOs (see /mnt/user-data/uploads DTOs).
-// A couple of DTOs share a concept under different names depending on which
-// endpoint produced them (e.g. player id is "id" on PlayerDTO but "playerId"
-// on RunScorerDTO/WicketTakerDTO/etc), so these still try a short list —
-// only one of the two is ever present on a given object, so there's no
-// ambiguity in practice.
+// Shared accessors for DTO fields used by more than one API response.
 
 export function pick(obj, keys, fallback = '—') {
   if (!obj) return fallback;
@@ -14,18 +9,13 @@ export function pick(obj, keys, fallback = '—') {
   return fallback;
 }
 
-// Normalizes a list response into a plain array. Every page here was doing
-// `Array.isArray(x) ? x : []`, which quietly renders as empty the moment an
-// endpoint returns anything other than a bare JSON array — most commonly a
-// Spring Data `Page<T>` (`{ content: [...], totalPages, ... }`) instead of a
-// `List<T>`. This is very likely what was hiding the Matches tab: the fetch
-// succeeds, `data` just isn't an array itself. Unwrap the common envelope
-// shapes here once, in one place, instead of at every call site.
+// Accept bare lists and common paginated response envelopes.
 export function toArray(value) {
   if (Array.isArray(value)) return value;
   if (value && Array.isArray(value.content)) return value.content;
   if (value && Array.isArray(value.data)) return value.data;
   if (value && Array.isArray(value.items)) return value.items;
+  if (value && Array.isArray(value.results)) return value.results;
   return [];
 }
 
@@ -46,10 +36,7 @@ export function opponentOf(match, thisTeamId) {
   return String(aId) === String(thisTeamId) ? bName : aName;
 }
 
-// MatchDTO has no plain "result" string — derive one from winnerName /
-// resultMargin / resultType. resultType is assumed to carry the margin's
-// unit (e.g. "RUNS", "WICKETS") — if your ResultType enum instead encodes
-// the outcome kind (WIN/TIE/DRAW/NO_RESULT), adjust this to a lookup table.
+// ResultType uses runs, wickets, tie, or no_result.
 export function resultText(match) {
   const winner = pick(match, ['winnerName'], null);
   const margin = pick(match, ['resultMargin'], null);

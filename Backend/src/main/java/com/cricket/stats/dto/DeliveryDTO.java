@@ -4,6 +4,10 @@ import lombok.Data;
 
 @Data
 public class DeliveryDTO {
+    private Long batterId;
+    private Long nonStrikerId;
+    private Long bowlerId;
+    private Long playerDismissedId;
     private Long deliveryId;
     private Integer matchId;
     private Integer innings;

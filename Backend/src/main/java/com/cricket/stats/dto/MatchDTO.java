@@ -9,6 +9,9 @@ import java.time.LocalDate;
 
 @Data
 public class MatchDTO {
+    private Integer seasonId;
+    private Integer tossWinnerId;
+    private Integer winnerId;
     private Integer matchId;
     private LocalDate matchDate;
     private String venue;

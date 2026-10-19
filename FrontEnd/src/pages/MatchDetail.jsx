@@ -4,7 +4,7 @@ import { useApi } from '../useApi.js';
 import Loading from '../components/Loading.jsx';
 import { ErrorState, EmptyState } from '../components/ErrorState.jsx';
 import DataTable from '../components/DataTable.jsx';
-import { pick, playerName, resultText } from '../fields.js';
+import { pick, playerName, resultText, toArray } from '../fields.js';
 import { AnimatedNumber, StickyHeader, TabRow, useScrolledPast } from '../motion.jsx';
 import '../motion.css';
 
@@ -64,7 +64,7 @@ function SummaryTab({ match }) {
 // MatchSquadDTO carries teamId/teamName per player, so the squad splits
 // cleanly into a column per side, ordered to match teamA/teamB.
 function SquadTab({ squad, match }) {
-  const list = Array.isArray(squad) ? squad : [];
+  const list = toArray(squad);
   if (list.length === 0) return <EmptyState message="No squad list available." />;
 
   const aId = pick(match, ['teamAId']);
@@ -170,7 +170,7 @@ function BowlingScorecardTable({ rows, matchId }) {
 
 function buildPlayerTeamMap(squad) {
   const map = {};
-  (Array.isArray(squad) ? squad : []).forEach((s) => {
+  toArray(squad).forEach((s) => {
     const pid = pick(s, ['playerId'], null);
     if (pid != null) map[String(pid)] = pick(s, ['teamId'], null);
   });
@@ -207,8 +207,8 @@ function formatExtrasBreakdown(entry) {
 }
 
 function ScorecardTab({ match, squad, battingRows, bowlingRows, extrasRows, matchId }) {
-  const battingList = Array.isArray(battingRows) ? battingRows : [];
-  const bowlingList = Array.isArray(bowlingRows) ? bowlingRows : [];
+  const battingList = toArray(battingRows);
+  const bowlingList = toArray(bowlingRows);
 
   if (battingList.length === 0 && bowlingList.length === 0) {
     return <EmptyState message="No scorecard available for this match yet." />;
@@ -231,7 +231,7 @@ function ScorecardTab({ match, squad, battingRows, bowlingRows, extrasRows, matc
   const battingFor = (teamId) => battingList.filter((r) => String(teamIdOfPlayer(pick(r, ['playerId']))) === String(teamId));
   const bowlingFor = (teamId) => bowlingList.filter((r) => String(teamIdOfPlayer(pick(r, ['playerId']))) === String(teamId));
 
-  const extrasList = Array.isArray(extrasRows) ? extrasRows : [];
+  const extrasList = toArray(extrasRows);
   const extrasFor = (inningsNumber) =>
     extrasList.find((e) => Number(pick(e, ['innings'], null)) === inningsNumber);
 
@@ -307,7 +307,7 @@ function ballLabel(delivery) {
 // API for this innings" rather than looking like it silently disappeared.
 function DeliveriesTab({ data, match }) {
   const [openKey, setOpenKey] = useState(null);
-  const list = Array.isArray(data) ? data : [];
+  const list = toArray(data);
   if (list.length === 0) return <EmptyState message="No ball-by-ball data recorded for this match." />;
 
   const format = String(pick(match, ['format'], '')).toUpperCase();

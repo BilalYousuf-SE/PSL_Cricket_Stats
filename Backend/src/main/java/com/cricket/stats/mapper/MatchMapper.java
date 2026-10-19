@@ -31,11 +31,13 @@ public class MatchMapper {
 
         // Toss winner
         if (match.getTossWinner() != null) {
+            dto.setTossWinnerId(match.getTossWinner().getTeamId());
             dto.setTossWinnerName(match.getTossWinner().getTeamName());
         }
 
         // Winner
         if (match.getWinner() != null) {
+            dto.setWinnerId(match.getWinner().getTeamId());
             dto.setWinnerName(match.getWinner().getTeamName());
         }
 
@@ -47,6 +49,7 @@ public class MatchMapper {
 
         // Season
         if (match.getSeason() != null) {
+            dto.setSeasonId(match.getSeason().getSeasonId());
             dto.setSeasonYear(match.getSeason().getYear());
         }
 

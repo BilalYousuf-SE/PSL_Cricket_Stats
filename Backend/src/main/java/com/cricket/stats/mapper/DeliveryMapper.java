@@ -30,15 +30,19 @@ public class DeliveryMapper {
 
         // Players — just names, no nested objects
         if (delivery.getBatter() != null) {
+            dto.setBatterId(delivery.getBatter().getId());
             dto.setBatterName(delivery.getBatter().getFullName());
         }
         if (delivery.getNonStriker() != null) {
+            dto.setNonStrikerId(delivery.getNonStriker().getId());
             dto.setNonStrikerName(delivery.getNonStriker().getFullName());
         }
         if (delivery.getBowler() != null) {
+            dto.setBowlerId(delivery.getBowler().getId());
             dto.setBowlerName(delivery.getBowler().getFullName());
         }
         if (delivery.getPlayerDismissed() != null) {
+            dto.setPlayerDismissedId(delivery.getPlayerDismissed().getId());
             dto.setPlayerDismissedName(delivery.getPlayerDismissed().getFullName());
         }
 

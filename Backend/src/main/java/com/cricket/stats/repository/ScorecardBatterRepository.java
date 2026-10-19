@@ -8,6 +8,7 @@ import com.cricket.stats.dto.StrikeRateDTO;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,10 @@ import java.util.List;
 
 @Repository
 public interface ScorecardBatterRepository extends JpaRepository<ScorecardBatter, ScorecardBatterId> {
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM ScorecardBatter row WHERE row.match.matchId = :matchId")
+    void deleteByMatchId(@Param("matchId") Integer matchId);
 
     // --- Derived Queries ---
 

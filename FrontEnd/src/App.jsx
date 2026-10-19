@@ -10,10 +10,9 @@ import MatchesList from './pages/MatchesList.jsx';
 import MatchDetail from './pages/MatchDetail.jsx';
 import Records from './pages/Records.jsx';
 import SeasonStats from './pages/SeasonStats.jsx';
-import BattingInningsDetail from './pages/BattingInningsDetail.jsx';
-import BowlingInningsDetail from './pages/BowlingInningsDetail.jsx';
+import InningsDetail from './pages/InningsDetail.jsx';
 import Admin from './pages/Admin.jsx';
-import AdminMatchDetail from './pages/AdminMatchDetail.jsx';
+
 
 export default function App() {
   const { pathname } = useLocation();
@@ -23,7 +22,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/matches/:matchId" element={<AdminMatchDetail />} />
+        <Route path="/admin/matches/:matchId" element={<Admin />} />
       </Routes>
     );
   }
@@ -41,8 +40,8 @@ export default function App() {
           <Route path="/players/:id" element={<PlayerDetail />} />
           <Route path="/matches" element={<MatchesList />} />
           <Route path="/matches/:id" element={<MatchDetail />} />
-          <Route path="/matches/:id/batting/:playerId" element={<BattingInningsDetail />} />
-          <Route path="/matches/:id/bowling/:playerId" element={<BowlingInningsDetail />} />
+          <Route path="/matches/:id/batting/:playerId" element={<InningsDetail type="batting" />} />
+          <Route path="/matches/:id/bowling/:playerId" element={<InningsDetail type="bowling" />} />
           <Route path="/records" element={<Records />} />
           <Route path="/records/season/:year" element={<SeasonStats />} />
           <Route

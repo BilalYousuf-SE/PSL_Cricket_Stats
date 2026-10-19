@@ -1,23 +1,25 @@
 package com.cricket.stats.service;
 
+import com.cricket.stats.dto.BattingStatsDTO;
+import com.cricket.stats.dto.BowlingStatsDTO;
+import com.cricket.stats.dto.PlayerDTO;
 import com.cricket.stats.entity.Player;
 import com.cricket.stats.entity.Roles;
+import com.cricket.stats.mapper.PlayerMapper;
 import com.cricket.stats.repository.MatchSquadRepository;
 import com.cricket.stats.repository.PlayerRepository;
 import com.cricket.stats.repository.ScorecardBatterRepository;
 import com.cricket.stats.repository.ScorecardBowlerRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import com.cricket.stats.dto.BattingStatsDTO;
-import com.cricket.stats.dto.BowlingStatsDTO;
-import com.cricket.stats.dto.PlayerDTO;
-import com.cricket.stats.mapper.PlayerMapper;
-
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PlayerService {
 
     private final PlayerRepository playerRepository;
@@ -35,7 +37,7 @@ public class PlayerService {
     public PlayerDTO getPlayerById(Long id) {
         return playerRepository.findById(id)
                 .map(PlayerMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Player not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Player not found"));
     }
 
     public List<PlayerDTO> searchPlayers(String name) {
@@ -85,22 +87,25 @@ public class PlayerService {
         return matchSquadRepository.countMatchesPlayedByPlayer(playerId);
     }
 
+    @Transactional
     public PlayerDTO createPlayer(PlayerDTO dto) {
         Player player = new Player();
         applyDtoToEntity(dto, player);
         return PlayerMapper.toDTO(playerRepository.save(player));
     }
 
+    @Transactional
     public PlayerDTO updatePlayer(Long id, PlayerDTO dto) {
         Player player = playerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Player not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Player not found: " + id));
         applyDtoToEntity(dto, player);
         return PlayerMapper.toDTO(playerRepository.save(player));
     }
 
+    @Transactional
     public void deletePlayer(Long id) {
         if (!playerRepository.existsById(id)) {
-            throw new RuntimeException("Player not found: " + id);
+            throw new ResponseStatusException(NOT_FOUND, "Player not found: " + id);
         }
         playerRepository.deleteById(id);
     }
@@ -108,9 +113,9 @@ public class PlayerService {
     // fullName is computed here rather than trusted from the client, since it's
     // a real stored column with no automatic derivation elsewhere in the code.
     private void applyDtoToEntity(PlayerDTO dto, Player player) {
-        player.setFirstName(dto.getFirstName());
-        player.setLastName(dto.getLastName());
-        player.setFullName(dto.getFirstName() + " " + dto.getLastName());
+        player.setFirstName(dto.getFirstName().strip());
+        player.setLastName(dto.getLastName().strip());
+        player.setFullName(player.getFirstName() + " " + player.getLastName());
         player.setAge(dto.getAge());
         player.setRole(dto.getRole());
         player.setNationality(dto.getNationality());

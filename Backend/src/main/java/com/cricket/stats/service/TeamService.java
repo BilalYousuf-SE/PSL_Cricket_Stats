@@ -1,21 +1,22 @@
 package com.cricket.stats.service;
 
-import com.cricket.stats.repository.TeamRepository;
-import org.springframework.stereotype.Service;
-import com.cricket.stats.dto.*;
+import com.cricket.stats.dto.TeamDTO;
 import com.cricket.stats.entity.Team;
-import com.cricket.stats.mapper.*;
-
+import com.cricket.stats.mapper.TeamMapper;
+import com.cricket.stats.repository.TeamRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TeamService {
 
     private final TeamRepository teamRepository;
-
-    public TeamService(TeamRepository teamRepository) {
-        this.teamRepository = teamRepository;
-    }
 
     public List<TeamDTO> getAllTeams() {
         return teamRepository.findAll().stream()
@@ -26,7 +27,7 @@ public class TeamService {
     public TeamDTO getTeamById(Integer id) {
         return teamRepository.findById(id)
                 .map(TeamMapper::toDTO)
-                .orElseThrow(() -> new RuntimeException("Team not found"));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team not found"));
     }
 
     public Long getMatchesPlayed(Integer teamId) {
@@ -43,26 +44,25 @@ public class TeamService {
                 .toList();
     }
 
-    public List<TeamLeaderboardDTO> getTeamLeaderboard() {
-        return teamRepository.findAllTimeLeaderboard();
-    }
-
+    @Transactional
     public TeamDTO createTeam(TeamDTO dto) {
         Team team = new Team();
         team.setTeamName(dto.getTeamName());
         return TeamMapper.toDTO(teamRepository.save(team));
     }
 
+    @Transactional
     public TeamDTO updateTeam(Integer id, TeamDTO dto) {
         Team team = teamRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Team not found: " + id));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Team not found: " + id));
         team.setTeamName(dto.getTeamName());
         return TeamMapper.toDTO(teamRepository.save(team));
     }
 
+    @Transactional
     public void deleteTeam(Integer id) {
         if (!teamRepository.existsById(id)) {
-            throw new RuntimeException("Team not found: " + id);
+            throw new ResponseStatusException(NOT_FOUND, "Team not found: " + id);
         }
         teamRepository.deleteById(id);
     }
