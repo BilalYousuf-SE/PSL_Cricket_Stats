@@ -19,7 +19,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     // Search player by full name (case insensitive)
     List<Player> findByFullNameContainingIgnoreCase(String name);
 
-    // Get all players of a specific role e.g. Batsman, AllRounder
+    // Get all players of a specific role e.g. Batsman, Allrounder
     List<Player> findByRole(Roles role);
 
     // Get all players from a country

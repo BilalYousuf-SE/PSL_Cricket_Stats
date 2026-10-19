@@ -16,7 +16,7 @@ public class PlayerMapper {
         dto.setAge(player.getAge());
         dto.setRole(player.getRole());
         dto.setNationality(player.getNationality());
-        dto.setBattingStyle(player.getBattingStyle());
+        dto.setPlayingStyle(player.getPlayingStyle());
         dto.setBowlingStyle(player.getBowlingStyle());
         return dto;
     }

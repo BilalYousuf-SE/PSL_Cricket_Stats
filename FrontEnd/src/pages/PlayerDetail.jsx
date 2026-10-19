@@ -154,11 +154,11 @@ export default function PlayerDetail() {
               <span className="stat-label">Matches played</span>
             </div>
             <div className="stat-cell">
-              <span className="stat-num">{pick(player, ['battingStyle'], '—')}</span>
-              <span className="stat-label">Batting style</span>
+              <span className="stat-num">{pick(player, ['playingStyle'], '—')}</span>
+              <span className="stat-label">Playing style</span>
             </div>
             <div className="stat-cell">
-              <span className="stat-num">{pick(player, ['bowlingStyle'], '—')}</span>
+              <span className="stat-num">{String(pick(player, ['bowlingStyle'], '—')).replace(/([a-z])([A-Z])/g, '$1 $2')}</span>
               <span className="stat-label">Bowling style</span>
             </div>
           </div>

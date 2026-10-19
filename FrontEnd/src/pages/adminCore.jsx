@@ -40,7 +40,7 @@ export function FormModal({ ent, row, refData, onClose, onSave }) {
   };
 
   const optionsFor = (f) => {
-    if (f.options) return f.options.map((o) => ({ value: o, label: o }));
+    if (f.options) return f.options.map((option) => typeof option === 'string' ? { value: option, label: option } : option);
     if (f.optionsFrom) return refData[f.optionsFrom] || [];
     return [];
   };

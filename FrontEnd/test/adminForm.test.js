@@ -37,3 +37,17 @@ test('fullName is derived by the backend and new squad members default to playin
   assert.equal(ENTITIES.find((entry) => entry.k === 'players').f.some((field) => field.n === 'fullName'), false);
   assert.equal(MATCH_ENTITIES.find((entry) => entry.k === 'squad').f.find((field) => field.n === 'isPlaying').defaultValue, true);
 });
+
+
+test('player forms separate playing hand, bowling technique, and the four roles', () => {
+  const fields = ENTITIES.find((entry) => entry.k === 'players').f;
+  assert.deepEqual(fields.find((field) => field.n === 'role').options, ['Batsman', 'Baller', 'Keeper', 'Allrounder']);
+  assert.equal(fields.some((field) => field.n === 'battingStyle'), false);
+  assert.deepEqual(fields.find((field) => field.n === 'playingStyle').options, ['Right', 'Left']);
+  const bowling = fields.find((field) => field.n === 'bowlingStyle');
+  assert.ok(bowling.options.some((option) => option.value === 'LeftArmOrthodox'));
+  assert.ok(bowling.options.every((option) => option.value !== 'Right' && option.value !== 'Left'));
+  assert.deepEqual(serializeForm(fields.filter((field) => ['role', 'playingStyle', 'bowlingStyle'].includes(field.n)), {
+    role: 'Baller', playingStyle: 'Right', bowlingStyle: 'LeftArmOrthodox',
+  }), { role: 'Baller', playingStyle: 'Right', bowlingStyle: 'LeftArmOrthodox' });
+});

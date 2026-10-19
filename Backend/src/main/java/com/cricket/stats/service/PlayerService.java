@@ -119,7 +119,7 @@ public class PlayerService {
         player.setAge(dto.getAge());
         player.setRole(dto.getRole());
         player.setNationality(dto.getNationality());
-        player.setBattingStyle(dto.getBattingStyle());
+        player.setPlayingStyle(dto.getPlayingStyle());
         player.setBowlingStyle(dto.getBowlingStyle());
     }
 }

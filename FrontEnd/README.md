@@ -66,3 +66,13 @@ player are combined by the existing schema.
 is only a browser gate; the backend currently does not authenticate write
 requests. Do not expose these mutation endpoints publicly without server-side
 authentication. `.env` files should remain local and untracked.
+
+
+## Player role/style migration
+
+Before starting this version on an existing database, stop the backend, back up
+MySQL, and run `../Backend/database/player-enums-migration.sql`. See that folder's
+README for old/new value mappings and preserved archive columns. Player JSON now
+uses `playingStyle` (`Right`/`Left`) and a separate bowling-technique `bowlingStyle`.
+Roles are `Batsman`, `Baller`, `Keeper`, and `Allrounder`. Use the regenerated
+player-enrichment SQL with these enums; the earlier enrichment file is incompatible.

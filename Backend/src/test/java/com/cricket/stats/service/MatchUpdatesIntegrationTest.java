@@ -161,6 +161,38 @@ class MatchUpdatesIntegrationTest {
         assertThat(matches.getMatchSquad(matchId)).isEmpty();
     }
 
+    @Test
+    void playerStylesRoundTripIndependentlyAndCanBeCleared() {
+        PlayerDTO request = players.getPlayerById(batter);
+        request.setRole(Roles.Baller);
+        request.setPlayingStyle(PlayingStyle.Right);
+        request.setBowlingStyle(BowlingStyle.LeftArmOrthodox);
+        players.updatePlayer(batter, request);
+        PlayerDTO saved = players.getPlayerById(batter);
+        assertThat(saved.getRole()).isEqualTo(Roles.Baller);
+        assertThat(saved.getPlayingStyle()).isEqualTo(PlayingStyle.Right);
+        assertThat(saved.getBowlingStyle()).isEqualTo(BowlingStyle.LeftArmOrthodox);
+        request.setRole(Roles.Keeper);
+        request.setPlayingStyle(null);
+        request.setBowlingStyle(null);
+        players.updatePlayer(batter, request);
+        PlayerDTO cleared = players.getPlayerById(batter);
+        assertThat(cleared.getRole()).isEqualTo(Roles.Keeper);
+        assertThat(cleared.getPlayingStyle()).isNull();
+        assertThat(cleared.getBowlingStyle()).isNull();
+    }
+
+    @Test
+    void playerRoleFilterUsesTheNewRoleNames() throws Exception {
+        PlayerDTO request = players.getPlayerById(batter);
+        request.setRole(Roles.Allrounder);
+        players.updatePlayer(batter, request);
+        mvc.perform(get("/players/role/Allrounder"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == " + batter + ")].role").value("Allrounder"));
+        mvc.perform(get("/players/role/UnknownRole")).andExpect(status().isBadRequest());
+    }
+
     private Long createPlayer(String name) {
         PlayerDTO player = new PlayerDTO();
         player.setFirstName("Test");

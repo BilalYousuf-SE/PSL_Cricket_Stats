@@ -1,7 +1,18 @@
 const F = (n, t = 'text', req, extra = {}) => ({ n, t, req, ...extra });
 
-const ROLE_OPTIONS = ['Batsman', 'FastBaller', 'OffSpinner', 'LegSpinner', 'AllRounder', 'WicketKeeper'];
+const ROLE_OPTIONS = ['Batsman', 'Baller', 'Keeper', 'Allrounder'];
 const STYLE_OPTIONS = ['Right', 'Left'];
+const BOWLING_STYLE_OPTIONS = [
+  { value: 'FastBaller', label: 'Fast baller' },
+  { value: 'FastMedium', label: 'Fast-medium' },
+  { value: 'MediumFast', label: 'Medium-fast' },
+  { value: 'MediumPacer', label: 'Medium pacer' },
+  { value: 'SlowMediumPacer', label: 'Slow-medium pacer' },
+  { value: 'OffSpinner', label: 'Off spinner' },
+  { value: 'LegSpinner', label: 'Leg spinner' },
+  { value: 'LeftArmOrthodox', label: 'Left-arm orthodox' },
+  { value: 'LeftArmWristSpin', label: 'Left-arm wrist spin' },
+];
 const FORMAT_OPTIONS = ['T20', 'ODI', 'Test', 'SUPEROVER'];
 const TOSS_OPTIONS = ['bat', 'bowl'];
 const RESULT_TYPE_OPTIONS = ['runs', 'wickets', 'tie', 'no_result'];
@@ -25,8 +36,8 @@ export const ENTITIES = [
       F('age', 'number'),
       F('role', 'select', 1, { options: ROLE_OPTIONS }),
       F('nationality', 'text', 1),
-      F('battingStyle', 'select', 0, { options: STYLE_OPTIONS }),
-      F('bowlingStyle', 'select', 0, { options: STYLE_OPTIONS }),
+      F('playingStyle', 'select', 0, { options: STYLE_OPTIONS }),
+      F('bowlingStyle', 'select', 0, { options: BOWLING_STYLE_OPTIONS }),
     ],
   },
   {

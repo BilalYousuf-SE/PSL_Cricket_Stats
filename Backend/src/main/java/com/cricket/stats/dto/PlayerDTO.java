@@ -1,6 +1,7 @@
 package com.cricket.stats.dto;
 
 import com.cricket.stats.entity.PlayingStyle;
+import com.cricket.stats.entity.BowlingStyle;
 import com.cricket.stats.entity.Roles;
 import lombok.Data;
 import jakarta.validation.constraints.*;
@@ -19,6 +20,6 @@ public class PlayerDTO {
     private Roles role;
     @NotBlank
     private String nationality;
-    private PlayingStyle battingStyle;
-    private PlayingStyle bowlingStyle;
+    private PlayingStyle playingStyle;
+    private BowlingStyle bowlingStyle;
 }

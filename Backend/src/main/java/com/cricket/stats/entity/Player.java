@@ -36,13 +36,13 @@ public class Player {
     @Column(name = "nationality")
     private String nationality;
 
-    @Column(name = "batting_style")
+    @Column(name = "playing_style")
     @Enumerated(EnumType.STRING)
-    private PlayingStyle battingStyle;
+    private PlayingStyle playingStyle;
 
     @Column(name = "bowling_style")
     @Enumerated(EnumType.STRING)
-    private PlayingStyle bowlingStyle;
+    private BowlingStyle bowlingStyle;
 
     @Column(name = "full_name")
     private String fullName;
