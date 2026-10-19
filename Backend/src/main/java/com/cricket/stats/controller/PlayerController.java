@@ -70,4 +70,19 @@ public class PlayerController {
     public List<PlayerMatchDTO> getMatches(@PathVariable Long id) {
         return matchService.getMatchesByPlayer(id);
     }
+
+    @PostMapping
+    public PlayerDTO createPlayer(@RequestBody PlayerDTO dto) {
+        return playerService.createPlayer(dto);
+    }
+
+    @PutMapping("/{id}")
+    public PlayerDTO updatePlayer(@PathVariable Long id, @RequestBody PlayerDTO dto) {
+        return playerService.updatePlayer(id, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deletePlayer(@PathVariable Long id) {
+        playerService.deletePlayer(id);
+    }
 }

@@ -38,4 +38,19 @@ public class TeamController {
     public List<TeamDTO> getTeamsBySeason(@PathVariable Integer year) {
         return teamService.getTeamsBySeason(year);
     }
+
+    @PostMapping
+    public TeamDTO createTeam(@RequestBody TeamDTO dto) {
+        return teamService.createTeam(dto);
+    }
+
+    @PutMapping("/{id}")
+    public TeamDTO updateTeam(@PathVariable Integer id, @RequestBody TeamDTO dto) {
+        return teamService.updateTeam(id, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteTeam(@PathVariable Integer id) {
+        teamService.deleteTeam(id);
+    }
 }

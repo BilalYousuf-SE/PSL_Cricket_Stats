@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import TeamsList from './pages/TeamsList.jsx';
@@ -12,8 +12,22 @@ import Records from './pages/Records.jsx';
 import SeasonStats from './pages/SeasonStats.jsx';
 import BattingInningsDetail from './pages/BattingInningsDetail.jsx';
 import BowlingInningsDetail from './pages/BowlingInningsDetail.jsx';
+import Admin from './pages/Admin.jsx';
+import AdminMatchDetail from './pages/AdminMatchDetail.jsx';
 
 export default function App() {
+  const { pathname } = useLocation();
+
+  // Admin is a standalone page: no public navbar / shell
+  if (pathname.startsWith('/admin')) {
+    return (
+      <Routes>
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/matches/:matchId" element={<AdminMatchDetail />} />
+      </Routes>
+    );
+  }
+
   return (
     <>
       <Navbar />

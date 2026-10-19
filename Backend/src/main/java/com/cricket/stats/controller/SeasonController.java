@@ -64,4 +64,19 @@ public class SeasonController {
     public List<StrikeRateDTO> getTopStrikeRates(@PathVariable Integer year) {
         return statsService.getTopStrikeRates(year);
     }
+
+    @PostMapping
+    public SeasonDTO createSeason(@RequestBody SeasonDTO dto) {
+        return seasonService.createSeason(dto);
+    }
+
+    @PutMapping("/{id}")
+    public SeasonDTO updateSeason(@PathVariable Integer id, @RequestBody SeasonDTO dto) {
+        return seasonService.updateSeason(id, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteSeason(@PathVariable Integer id) {
+        seasonService.deleteSeason(id);
+    }
 }

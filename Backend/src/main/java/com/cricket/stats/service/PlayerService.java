@@ -1,5 +1,6 @@
 package com.cricket.stats.service;
 
+import com.cricket.stats.entity.Player;
 import com.cricket.stats.entity.Roles;
 import com.cricket.stats.repository.MatchSquadRepository;
 import com.cricket.stats.repository.PlayerRepository;
@@ -82,5 +83,38 @@ public class PlayerService {
 
     public Long getMatchesPlayed(Long playerId) {
         return matchSquadRepository.countMatchesPlayedByPlayer(playerId);
+    }
+
+    public PlayerDTO createPlayer(PlayerDTO dto) {
+        Player player = new Player();
+        applyDtoToEntity(dto, player);
+        return PlayerMapper.toDTO(playerRepository.save(player));
+    }
+
+    public PlayerDTO updatePlayer(Long id, PlayerDTO dto) {
+        Player player = playerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Player not found: " + id));
+        applyDtoToEntity(dto, player);
+        return PlayerMapper.toDTO(playerRepository.save(player));
+    }
+
+    public void deletePlayer(Long id) {
+        if (!playerRepository.existsById(id)) {
+            throw new RuntimeException("Player not found: " + id);
+        }
+        playerRepository.deleteById(id);
+    }
+
+    // fullName is computed here rather than trusted from the client, since it's
+    // a real stored column with no automatic derivation elsewhere in the code.
+    private void applyDtoToEntity(PlayerDTO dto, Player player) {
+        player.setFirstName(dto.getFirstName());
+        player.setLastName(dto.getLastName());
+        player.setFullName(dto.getFirstName() + " " + dto.getLastName());
+        player.setAge(dto.getAge());
+        player.setRole(dto.getRole());
+        player.setNationality(dto.getNationality());
+        player.setBattingStyle(dto.getBattingStyle());
+        player.setBowlingStyle(dto.getBowlingStyle());
     }
 }

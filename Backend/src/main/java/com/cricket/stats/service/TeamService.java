@@ -3,6 +3,7 @@ package com.cricket.stats.service;
 import com.cricket.stats.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 import com.cricket.stats.dto.*;
+import com.cricket.stats.entity.Team;
 import com.cricket.stats.mapper.*;
 
 import java.util.List;
@@ -44,5 +45,25 @@ public class TeamService {
 
     public List<TeamLeaderboardDTO> getTeamLeaderboard() {
         return teamRepository.findAllTimeLeaderboard();
+    }
+
+    public TeamDTO createTeam(TeamDTO dto) {
+        Team team = new Team();
+        team.setTeamName(dto.getTeamName());
+        return TeamMapper.toDTO(teamRepository.save(team));
+    }
+
+    public TeamDTO updateTeam(Integer id, TeamDTO dto) {
+        Team team = teamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Team not found: " + id));
+        team.setTeamName(dto.getTeamName());
+        return TeamMapper.toDTO(teamRepository.save(team));
+    }
+
+    public void deleteTeam(Integer id) {
+        if (!teamRepository.existsById(id)) {
+            throw new RuntimeException("Team not found: " + id);
+        }
+        teamRepository.deleteById(id);
     }
 }

@@ -58,6 +58,23 @@ export function useRevealOnScroll(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
+
+    // If the element is already on screen the instant it mounts (common for
+    // content near the top of a short page, like a freshly-loaded list),
+    // reveal it right away rather than waiting on the observer's first
+    // async callback. That callback only fires once on a threshold
+    // crossing — if a layout shift (e.g. a web font loading in) causes the
+    // very first measurement to land just under the threshold, and the
+    // page never scrolls afterward, the crossing never happens again and
+    // the element stays stuck at opacity: 0 forever, even though it's
+    // fully in view.
+    const rect = el.getBoundingClientRect();
+    const alreadyInView = rect.top < window.innerHeight && rect.bottom > 0;
+    if (alreadyInView) {
+      setVisible(true);
+      return undefined;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {

@@ -3,7 +3,7 @@ package com.cricket.stats.controller;
 import com.cricket.stats.entity.*;
 import com.cricket.stats.service.MatchService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*; 
+import org.springframework.web.bind.annotation.*;
 import com.cricket.stats.dto.*;
 
 import java.util.List;
@@ -85,9 +85,9 @@ public class MatchController {
     @GetMapping("/{id}/deliveries/bowler/{playerId}")
     public List<DeliveryDTO> getBowlingDeliveries(
             @PathVariable Integer id, @PathVariable Long playerId) {
-      return matchService.getBowlingBallbyBall(id, playerId);
+        return matchService.getBowlingBallbyBall(id, playerId);
     }
-    
+
 
     @GetMapping("/{id}/deliveries")
     public List<DeliveryDTO> getDeliveries(
@@ -96,8 +96,59 @@ public class MatchController {
         return matchService.getDeliveries(id);
     }
 
-    @GetMapping("/{id}/extras")
-    public List<InningsExtrasDTO> getExtrasByInnings(@PathVariable Integer id) {
-        return matchService.getExtrasByInnings(id);
+    // ---------------- Match CRUD ----------------
+
+    @PostMapping
+    public MatchDTO createMatch(@RequestBody MatchRequestDTO request) {
+        return matchService.createMatch(request);
+    }
+
+    @PutMapping("/{id}")
+    public MatchDTO updateMatch(@PathVariable Integer id, @RequestBody MatchRequestDTO request) {
+        return matchService.updateMatch(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteMatch(@PathVariable Integer id) {
+        matchService.deleteMatch(id);
+    }
+
+    // ---------------- Match Squad CRUD ----------------
+
+    @PostMapping("/{id}/squad")
+    public MatchSquadDTO addSquadMember(@PathVariable Integer id, @RequestBody MatchSquadRequestDTO request) {
+        return matchService.addSquadMember(id, request);
+    }
+
+    @PutMapping("/{id}/squad/{playerId}")
+    public MatchSquadDTO updateSquadMember(@PathVariable Integer id, @PathVariable Long playerId,
+                                            @RequestBody MatchSquadRequestDTO request) {
+        return matchService.updateSquadMember(id, playerId, request);
+    }
+
+    @DeleteMapping("/{id}/squad/{playerId}")
+    public void removeSquadMember(@PathVariable Integer id, @PathVariable Long playerId) {
+        matchService.removeSquadMember(id, playerId);
+    }
+
+    // ---------------- Delivery CRUD ----------------
+    // Note: batting-scorecard and bowling-scorecard have no write endpoints
+    // anymore — they're derived automatically from deliveries every time one
+    // of these three runs. Edit a delivery to correct a scorecard.
+
+    @PostMapping("/{id}/deliveries")
+    public DeliveryDTO addDelivery(@PathVariable Integer id, @RequestBody DeliveryRequestDTO request) {
+        return matchService.addDelivery(id, request);
+    }
+
+    @PutMapping("/{id}/deliveries/{deliveryId}")
+    public DeliveryDTO updateDelivery(@PathVariable Integer id, @PathVariable Long deliveryId,
+                                       @RequestBody DeliveryRequestDTO request) {
+        return matchService.updateDelivery(id, deliveryId, request);
+    }
+
+    @DeleteMapping("/{id}/deliveries/{deliveryId}")
+    public void deleteDelivery(@PathVariable Integer id, @PathVariable Long deliveryId) {
+        matchService.deleteDelivery(id, deliveryId);
     }
 }
