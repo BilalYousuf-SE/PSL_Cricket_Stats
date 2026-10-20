@@ -2,7 +2,7 @@ import '../motion.css';
 
 // Generic scorecard-style table.
 // columns: [{ key, label, align: 'left'|'right', render?: (row, i) => node }]
-export default function DataTable({ columns, rows, onRowClick, rankFrom }) {
+export default function DataTable({ columns, rows, onRowClick, rankFrom, children }) {
   return (
     <table className="data-table">
       <thead>
@@ -31,6 +31,7 @@ export default function DataTable({ columns, rows, onRowClick, rankFrom }) {
             ))}
           </tr>
         ))}
+        {children}
       </tbody>
     </table>
   );

@@ -111,7 +111,7 @@ function SquadTab({ squad, match }) {
   );
 }
 
-function BattingScorecardTable({ rows, matchId }) {
+function BattingScorecardTable({ rows, matchId, extrasEntry }) {
   if (rows.length === 0) return <div className="innings-empty"><EmptyState message="No batting data recorded." /></div>;
   return (
     <DataTable
@@ -138,7 +138,16 @@ function BattingScorecardTable({ rows, matchId }) {
           ),
         },
       ]}
-    />
+    >
+      {extrasEntry && (
+        <tr>
+          <td className="name-cell">Extras</td>
+          <td className="subtle">{formatExtrasBreakdown(extrasEntry)}</td>
+          <td className="num">{pick(extrasEntry, ['totalExtras'], 0)}</td>
+          <td colSpan={5} />
+        </tr>
+      )}
+    </DataTable>
   );
 }
 
@@ -248,7 +257,6 @@ function ScorecardTab({ match, squad, battingRows, bowlingRows, extrasRows, matc
         const totalRuns = battingRowsForInnings.reduce((sum, r) => sum + (Number(pick(r, ['runs'], 0)) || 0), 0);
         const totalWickets = battingRowsForInnings.filter((r) => pick(r, ['isOut'], false) === true).length;
         const extrasEntry = extrasFor(inn.inningsNumber);
-        const extrasBreakdown = extrasEntry ? formatExtrasBreakdown(extrasEntry) : '';
 
         return (
           <div className="innings-block" key={idx}>
@@ -259,16 +267,10 @@ function ScorecardTab({ match, squad, battingRows, bowlingRows, extrasRows, matc
                   <span className="innings-score-figure">
                     <AnimatedNumber value={totalRuns} />/{totalWickets}
                   </span>
-                  {extrasEntry && (
-                    <span className="subtle" style={{ marginLeft: 8 }}>
-                      · {pick(extrasEntry, ['totalExtras'], 0)} extras
-                      {extrasBreakdown ? ` (${extrasBreakdown})` : ''}
-                    </span>
-                  )}
                 </div>
               )}
             </div>
-            <BattingScorecardTable rows={battingRowsForInnings} matchId={matchId} />
+            <BattingScorecardTable rows={battingRowsForInnings} matchId={matchId} extrasEntry={extrasEntry} />
 
             <div className="innings-subheading">
               <h5>Bowling — {inn.bowlingTeamName}</h5>
