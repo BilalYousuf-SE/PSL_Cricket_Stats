@@ -52,7 +52,9 @@ matches with no partnerships return an empty list.
 
 The entity maps a nullable integer `partnerships.innings` column. The repeatable
 `database/partnership-schema.sql` file adds it and a match/innings/wicket index;
-it also creates the partnership table if missing. Existing rows keep
+it also creates the partnership table if missing and enables `AUTO_INCREMENT`
+on an existing `partnership_id` column while preserving its integer type,
+signedness, and existing IDs. Existing rows keep
 `innings = NULL` until backfilled. They remain visible in unfiltered reads and
 are excluded from a specific innings filter. New API writes require an explicit
 positive innings number.
@@ -126,6 +128,13 @@ reports malformed/orphan records. It also lists preserved matches without
 deliveries; those may still have unknown innings and need separate review.
 Delivery corrections made later require another backfill for that match.
 
+If an older table produces `ERROR 1364: Field 'partnership_id' doesn't have a
+default value`, rerun the latest schema file before applying the backfill. An
+older schema file may have added innings without enabling ID generation on an
+existing table. After updating, `SHOW COLUMNS FROM partnerships LIKE
+'partnership_id';` should include `auto_increment` in `Extra`. The backfill
+also checks this prerequisite before calculating stands.
+
 ## Verification
 
 Run the database-independent checks with:
@@ -153,8 +162,8 @@ mysql -u root -p psl_partnership_test_local
 
 At that MySQL prompt, run
 `SOURCE Backend/database/partnership-fixture-test.sql;` from the repository
-root. It checks creation/migration, preview, repeat runs, single-match scope,
-extras, run-outs, retirement/resumed stands, and preserved matches without
+root. It checks creation/migration (including legacy ID generation), preview,
+repeat runs, single-match scope, extras, run-outs, retirement/resumed stands, and preserved matches without
 deliveries. It ends with `Partnership SQL fixture checks passed`. The fixture
 database is left in place for inspection; do not use it as your application
 database.

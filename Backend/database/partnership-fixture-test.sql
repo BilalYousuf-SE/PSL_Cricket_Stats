@@ -45,14 +45,21 @@ INSERT INTO deliveries VALUES
     (15, 2, 1, 0, 1, 1, 2, 3, 0, NULL, NULL, NULL);
 
 SOURCE Backend/database/partnership-schema.sql;
--- Exercise migration of a pre-existing table without an innings column too.
+-- Exercise a legacy table with neither innings nor an AUTO_INCREMENT ID.
 CREATE INDEX idx_fixture_match ON partnerships (match_id);
 ALTER TABLE partnerships DROP INDEX idx_partnership_match_innings;
 ALTER TABLE partnerships DROP COLUMN innings;
+ALTER TABLE partnerships MODIFY COLUMN partnership_id INT UNSIGNED NOT NULL;
 INSERT INTO partnerships (partnership_id, match_id, batter1_id, batter2_id, runs, balls_faced, wicket_number)
 VALUES (900, 1, 1, 2, 999, 99, 1);
 SOURCE Backend/database/partnership-schema.sql;
 SOURCE Backend/database/partnership-schema.sql;
+CALL psl_test_assert((SELECT COUNT(*) = 1 FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'partnerships' AND column_name = 'partnership_id'
+      AND data_type = 'int' AND column_type LIKE '%unsigned%' AND extra LIKE '%auto_increment%'),
+    'Legacy ID migration must enable generation while preserving INT UNSIGNED.');
+CALL psl_test_assert((SELECT runs = 999 FROM partnerships WHERE partnership_id = 900),
+    'Schema migration changed an existing partnership ID or record.');
 INSERT INTO partnerships (partnership_id, match_id, innings, batter1_id, batter2_id, runs, balls_faced, wicket_number)
 VALUES (901, 3, 1, 1, 2, 99, 20, 1), (902, 2, 1, 1, 2, 99, 20, 1);
 

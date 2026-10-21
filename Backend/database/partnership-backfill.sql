@@ -33,6 +33,11 @@ BEGIN
                    WHERE table_schema = DATABASE() AND table_name = 'partnerships' AND engine = 'InnoDB') THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Run the schema file first; partnerships must use InnoDB.';
     END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema = DATABASE() AND table_name = 'partnerships'
+                     AND column_name = 'partnership_id' AND extra LIKE '%auto_increment%') THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Run updated partnership-schema.sql: partnership_id must be AUTO_INCREMENT.';
+    END IF;
     IF p_match_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM matches WHERE match_id = p_match_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'The selected match does not exist.';
     END IF;

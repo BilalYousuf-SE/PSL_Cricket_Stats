@@ -18,6 +18,19 @@ CREATE TABLE IF NOT EXISTS partnerships (
     CONSTRAINT fk_partnership_batter2 FOREIGN KEY (batter2_id) REFERENCES player (id)
 ) ENGINE = InnoDB;
 
+-- CREATE TABLE IF NOT EXISTS does not repair a legacy ID column. Preserve its
+-- integer type (including UNSIGNED) and existing IDs while enabling generation.
+SET @partnership_schema_ddl = (
+    SELECT IF(extra LIKE '%auto_increment%', 'DO 0',
+        CONCAT('ALTER TABLE partnerships MODIFY COLUMN partnership_id ',
+               column_type, ' NOT NULL AUTO_INCREMENT'))
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'partnerships' AND column_name = 'partnership_id'
+);
+PREPARE partnership_schema_statement FROM @partnership_schema_ddl;
+EXECUTE partnership_schema_statement;
+DEALLOCATE PREPARE partnership_schema_statement;
+
 SET @partnership_schema_ddl = (
     SELECT IF(COUNT(*) = 0,
         'ALTER TABLE partnerships ADD COLUMN innings INT NULL AFTER match_id', 'DO 0')
