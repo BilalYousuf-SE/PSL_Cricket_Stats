@@ -30,6 +30,8 @@ This avoids modifying the tracked dependency files during development.
 - `src/useApi.js`: single or parallel requests, loading/error state, and reload.
   It cancels obsolete requests when paths change or the component unmounts.
 - `src/fields.js`: shared DTO accessors and list normalization.
+- `src/matchups.js` and `src/components/MatchupViews.jsx`: shared player
+  comparisons, opponent lists, team matrices, and season/date filters.
 - `src/components/`: shared tables, navigation, loading, and error states.
 - `src/pages/`: route components. `InningsDetail.jsx` serves both the batting and
   bowling ball-by-ball routes, retaining their separate statistics.
@@ -47,6 +49,7 @@ This avoids modifying the tracked dependency files during development.
 | Matches | `/matches`, `/matches/{id}`, `/matches/team/{id}`, `/matches/format/{format}`, `/matches/headtohead/{team1}/{team2}` |
 | Match details | `/matches/{id}/squad`, `/matches/{id}/batting-scorecard`, `/matches/{id}/bowling-scorecard`, `/matches/{id}/extras`, `/matches/{id}/deliveries` |
 | Player deliveries | `/matches/{id}/deliveries/batter/{playerId}`, `/matches/{id}/deliveries/bowler/{playerId}` |
+| Matchups | `/matchups/options`, `/matchups/players/{batterId}/{bowlerId}`, `/matchups/players/{playerId}`, `/matchups/players/{batterId}/{bowlerId}/matches`, `/matchups/teams` |
 | Seasons | `/season`, `/season/{year}/leaderboard`, `/season/{year}/top-runs`, `/season/{year}/top-wickets`, `/season/{year}/top-strike-rates`, `/season/{year}/highest-scores`, `/season/{year}/best-bowling`, `/season/{year}/matches`, `/season/{year}/winner` |
 
 Admin routes use `pages/Admin.jsx`, the form in `pages/adminCore.jsx`, and entity
@@ -54,6 +57,14 @@ configuration in `adminEntities.js`. Both `/admin` and `/admin/matches/:matchId`
 use the same editor. Forms send IDs directly from API responses, and clearing an
 optional field sends `null`. Batting and bowling scorecards are read-only: edit
 Deliveries to update them.
+
+The `/matchups` page offers player comparisons and team matrices. Player profiles
+also show batting/bowling opponent lists, and team profiles include a matrix.
+Season and inclusive match-date filters intersect; encounters always follow the
+players across every team they represented. Team selection chooses matrix squad
+members, with season controlling roster membership. Matchups are read-only and
+need no SQL backfill. See [backend matchup documentation](../Backend/MATCHUPS.md)
+for scoring definitions, pagination, filters, and roster rules.
 
 Delivery changes and scorecard rebuilds run in one backend transaction, with a
 per-match lock for concurrent writes. The calculator is tested separately from

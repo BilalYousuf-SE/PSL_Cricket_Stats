@@ -5,7 +5,10 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "deliveries")
+@Table(name = "deliveries", indexes = {
+        @Index(name = "idx_delivery_matchup_batter_bowler", columnList = "batter_id,bowler_id,match_id"),
+        @Index(name = "idx_delivery_matchup_bowler_batter", columnList = "bowler_id,batter_id,match_id")
+})
 public class Delivery {
 
     @Id

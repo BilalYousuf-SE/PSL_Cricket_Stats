@@ -4,6 +4,7 @@ import { useApi } from '../useApi.js';
 import Loading from '../components/Loading.jsx';
 import { ErrorState, EmptyState } from '../components/ErrorState.jsx';
 import DataTable from '../components/DataTable.jsx';
+import { PlayerMatchups } from '../components/MatchupViews.jsx';
 import { pick, playerName, toArray } from '../fields.js';
 import { AnimatedNumber, Reveal, StickyHeader, useScrolledPast } from '../motion.jsx';
 import '../motion.css';
@@ -229,6 +230,8 @@ export default function PlayerDetail() {
               </div>
             </Reveal>
           </div>
+
+          <PlayerMatchups key={id} id={id} />
 
           <h3 className="section-heading section-spacer">Matches Played</h3>
           <Reveal className="scorecard">
