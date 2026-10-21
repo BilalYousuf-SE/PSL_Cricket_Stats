@@ -4,11 +4,12 @@ import { useApi } from '../useApi.js';
 import Loading from '../components/Loading.jsx';
 import { ErrorState, EmptyState } from '../components/ErrorState.jsx';
 import DataTable from '../components/DataTable.jsx';
+import PartnershipsTab from '../components/PartnershipsTab.jsx';
 import { pick, playerName, resultText, toArray } from '../fields.js';
 import { AnimatedNumber, StickyHeader, TabRow, useScrolledPast } from '../motion.jsx';
 import '../motion.css';
 
-const TABS = ['Summary', 'Squad', 'Scorecard', 'Deliveries'];
+const TABS = ['Summary', 'Squad', 'Scorecard', 'Partnerships', 'Deliveries'];
 
 function SummaryTab({ match }) {
   if (!match) return <EmptyState message="No summary available." />;
@@ -450,6 +451,7 @@ export default function MatchDetail() {
                 {activeTab === 'Scorecard' && (
                   <ScorecardTab match={match} squad={squad} battingRows={batting} bowlingRows={bowling} extrasRows={extras} matchId={id} />
                 )}
+                {activeTab === 'Partnerships' && <PartnershipsTab matchId={id} squad={squad} />}
                 {activeTab === 'Deliveries' && <DeliveriesTab data={deliveries} match={match} />}
               </div>
             </div>

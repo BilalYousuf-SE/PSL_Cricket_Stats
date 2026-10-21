@@ -1,3 +1,5 @@
+import { groupPartnerships, partnershipBatterOptions } from './partnerships.js';
+
 const F = (n, t = 'text', req, extra = {}) => ({ n, t, req, ...extra });
 
 const ROLE_OPTIONS = ['Batsman', 'Baller', 'Keeper', 'Allrounder'];
@@ -103,6 +105,31 @@ export const MATCH_ENTITIES = [
       ['maidens', 'Maidens'], ['runsConceded', 'Runs'], ['wickets', 'Wkts'], ['economy', 'Econ'],
     ],
     readOnly: true,
+  },
+  {
+    k: 'partnerships', l: 'Partnerships', p: (m) => `/matches/${m}/partnerships`, id: 'partnershipId',
+    cols: [
+      ['partnershipId', 'ID'], ['wicketNumber', 'Wicket'], ['batter1Name', 'Batter 1'],
+      ['batter2Name', 'Batter 2'], ['runs', 'Runs'], ['ballsFaced', 'Balls'],
+    ],
+    groupRows: groupPartnerships,
+    description: 'Runs include extras. Balls count legal deliveries.',
+    resolveInitial: (row) => ({ innings: row.innings ?? '' }),
+    f: [
+      F('innings', 'number', 1, { label: 'Innings', min: 1, step: 1, defaultValue: 1 }),
+      F('wicketNumber', 'number', 1, { label: 'Wicket number', min: 1, max: 10, step: 1, defaultValue: 1 }),
+      F('batter1Id', 'select', 1, {
+        label: 'Batter 1', optionsFrom: 'squad',
+        getOptions: (values, refs) => partnershipBatterOptions(values, refs, 'batter2Id'),
+      }),
+      F('batter2Id', 'select', 1, {
+        label: 'Batter 2', optionsFrom: 'squad',
+        getOptions: (values, refs) => partnershipBatterOptions(values, refs, 'batter1Id'),
+      }),
+      F('runs', 'number', 1, { label: 'Runs', min: 0, step: 1, defaultValue: 0 }),
+      F('ballsFaced', 'number', 1, { label: 'Balls', min: 0, step: 1, defaultValue: 0 }),
+    ],
+    validate: (body) => body.batter1Id === body.batter2Id ? 'Choose two different batters.' : '',
   },
   {
     k: 'deliveries', l: 'Deliveries', p: (m) => `/matches/${m}/deliveries`, id: 'deliveryId',

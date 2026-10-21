@@ -40,6 +40,7 @@ function Login({ onOk }) {
 function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
   const { data, loading, error, reload } = useApi(url, [], { enabled: !!url });
   const rows = asRows(data);
+  const groups = ent.groupRows ? ent.groupRows(rows) : [{ key: 'all', rows }];
   const [err, setErr] = useState('');
   const [modal, setModal] = useState(null);
   const state = loading ? 'loading' : error || err ? 'error' : 'idle';
@@ -62,6 +63,7 @@ function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
 
   return (
     <>
+      {ent.description && <p className="subtle admin-panel-hint">{ent.description}</p>}
       <div className="admin-toolbar">
         <span className="subtle admin-count">{rows.length} rows</span>
         {!ent.readOnly && (
@@ -88,26 +90,33 @@ function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
                 {!ent.readOnly && <th className="num">Actions</th>}
               </tr>
             </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr
-                  key={r[ent.id] ?? i}
-                  className="row-reveal"
-                  style={{ '--i': i, cursor: onRowClick ? 'pointer' : 'default' }}
-                  onClick={onRowClick ? () => onRowClick(r) : undefined}
-                >
-                  {ent.cols.map(([key]) => (
-                    <td key={key}>{typeof r[key] === 'boolean' ? (r[key] ? '✓' : '—') : String(r[key] ?? '—')}</td>
-                  ))}
-                  {!ent.readOnly && (
-                    <td className="num admin-row-actions" onClick={(e) => e.stopPropagation()}>
-                      <button className="admin-btn sm" onClick={() => setModal({ row: r })}>Edit</button>
-                      <button className="admin-btn sm danger" onClick={() => del(r)}>Delete</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
+            {groups.map((group) => (
+              <tbody key={group.key}>
+                {group.label && (
+                  <tr className="admin-group-heading">
+                    <th scope="rowgroup" colSpan={ent.cols.length + (ent.readOnly ? 0 : 1)}>{group.label}</th>
+                  </tr>
+                )}
+                {group.rows.map((r, i) => (
+                  <tr
+                    key={r[ent.id] ?? i}
+                    className="row-reveal"
+                    style={{ '--i': i, cursor: onRowClick ? 'pointer' : 'default' }}
+                    onClick={onRowClick ? () => onRowClick(r) : undefined}
+                  >
+                    {ent.cols.map(([key]) => (
+                      <td key={key}>{typeof r[key] === 'boolean' ? (r[key] ? '✓' : '—') : String(r[key] ?? '—')}</td>
+                    ))}
+                    {!ent.readOnly && (
+                      <td className="num admin-row-actions" onClick={(e) => e.stopPropagation()}>
+                        <button className="admin-btn sm" onClick={() => setModal({ row: r })}>Edit</button>
+                        <button className="admin-btn sm danger" onClick={() => del(r)}>Delete</button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
         )}
       </div>
@@ -144,7 +153,7 @@ export default function Admin() {
     } catch { /* individual panels still surface their own load errors */ }
   }, []);
 
-  // Deliveries' batter/bowler/dismissed-player dropdowns are scoped to the
+  // Delivery and partnership player dropdowns are scoped to the
   // active match's squad rather than every player ever recorded — reloaded
   // whenever the Squad tab changes so a just-added player shows up right away.
   const loadSquadRef = useCallback(async (matchId) => {
@@ -152,9 +161,11 @@ export default function Admin() {
       const squad = await api('GET', `/matches/${matchId}/squad`);
       setRefData((prev) => ({
         ...prev,
-        squad: asRows(squad).map((s) => ({ value: s.playerId, label: s.playerName })),
+        squad: asRows(squad).map((s) => ({
+          value: s.playerId, label: s.playerName, teamId: s.teamId, teamName: s.teamName, isPlaying: s.isPlaying,
+        })),
       }));
-    } catch { /* deliveries' player selects just stay empty until this succeeds */ }
+    } catch { /* player selects stay empty until the squad can be loaded */ }
   }, []);
 
   useEffect(() => { if (authed) loadRefData(); }, [authed, loadRefData]);
