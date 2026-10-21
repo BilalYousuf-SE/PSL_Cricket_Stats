@@ -74,10 +74,11 @@ if your connection uses different values):
 
 ```sh
 mysqldump -u root -p --single-transaction --no-tablespaces --result-file=psl-before-partnerships.sql psl
-mysql -u root -p --default-character-set=utf8mb4 --abort-source-on-error psl
+mysql -u root -p --default-character-set=utf8mb4 psl
 ```
 
-In the MySQL prompt:
+In the MySQL prompt, run each step separately. If any command reports an
+`ERROR`, stop and resolve it before continuing to apply mode:
 
 ```sql
 SOURCE Backend/database/partnership-schema.sql;
@@ -147,7 +148,7 @@ The standalone SQL regression test must also use its own **empty** database:
 
 ```sh
 mysql -u root -p -e "CREATE DATABASE psl_partnership_test_local"
-mysql -u root -p --abort-source-on-error psl_partnership_test_local
+mysql -u root -p psl_partnership_test_local
 ```
 
 At that MySQL prompt, run
