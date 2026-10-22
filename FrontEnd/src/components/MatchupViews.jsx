@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../useApi.js';
 import { playerId, playerName, teamId, teamName, toArray } from '../fields.js';
@@ -179,46 +179,45 @@ export function PlayerComparison({ filters, initialBatterId = '', initialBowlerI
   );
 }
 
-function TeamMatrix({ battingTeam, bowlingTeam, filters, metric }) {
-  const [batterPage, setBatterPage] = useState(0);
-  const [bowlerPage, setBowlerPage] = useState(0);
+function TeamMatrix({ battingTeam, bowlingTeam, filters }) {
+  const legendId = useId();
   const [selected, setSelected] = useState(null);
-  const { data, loading, error, reload } = useApi(`/matchups/teams${matchupQuery(filters, { battingTeamId: battingTeam, bowlingTeamId: bowlingTeam, batterPage, bowlerPage, size: 10 })}`, [], { enabled: !matchupFilterError(filters) });
-  const cells = matchupCells(data?.cells);
-  const metricLabel = MATCHUP_METRICS.find((entry) => entry.key === metric)?.label;
-  const changePage = (setter, next) => { setter(next); setSelected(null); };
+  const { data, loading, error, reload } = useApi(`/matchups/teams${matchupQuery(filters, { battingTeamId: battingTeam, bowlingTeamId: bowlingTeam })}`, [], { enabled: !matchupFilterError(filters) });
+  const cells = useMemo(() => matchupCells(data?.cells), [data?.cells]);
+  const batters = toArray(data?.batters);
+  const bowlers = toArray(data?.bowlers);
   return (
     <>
       {loading ? <Loading rows={5} label="Building the matchup matrix…" />
         : error ? <ErrorState message={error} onRetry={reload} />
-          : data && (data.batters.totalElements === 0 || data.bowlers.totalElements === 0
+          : data && (batters.length === 0 || bowlers.length === 0
             ? <EmptyState title="No squad members in this selection" message="Try another season or team. Squads use recorded playing members; encounters can come from any represented team." />
             : <div className="scorecard">
-              <div className="scorecard-header"><h3>{data.battingTeamName} batting vs {data.bowlingTeamName} bowling</h3><span>{metricLabel}</span></div>
+              <div className="scorecard-header matchup-matrix-heading"><h3>{data.battingTeamName} batting vs {data.bowlingTeamName} bowling</h3><span>{batters.length} batters × {bowlers.length} bowlers</span></div>
+              <p className="matchup-matrix-legend" id={legendId}><strong>Dismissals / runs (balls)</strong> · Avg and SR below. Select a cell for details.</p>
               <div className="matchup-table-scroll matchup-matrix-scroll" tabIndex="0" role="region" aria-label="Scrollable matchup matrix">
-                <table className="data-table matchup-matrix">
-                  <caption>{metricLabel} · rows are batters, columns are bowlers. Select a recorded encounter for full statistics.</caption>
-                  <thead><tr><th scope="col">Batter ↓ / Bowler →</th>{toArray(data.bowlers).map((bowler) => <th scope="col" key={bowler.playerId}><Link to={`/players/${bowler.playerId}`}>{bowler.playerName}</Link></th>)}</tr></thead>
-                  <tbody>{toArray(data.batters).map((batter) => <tr key={batter.playerId}>
+                <table className="data-table matchup-matrix" aria-label={`${data.battingTeamName} batters against ${data.bowlingTeamName} bowlers`} aria-describedby={legendId}>
+                  <thead><tr><th scope="col">Batter ↓ / Bowler →</th>{bowlers.map((bowler) => <th scope="col" key={bowler.playerId}><Link to={`/players/${bowler.playerId}`}>{bowler.playerName}</Link></th>)}</tr></thead>
+                  <tbody>{batters.map((batter) => <tr key={batter.playerId}>
                     <th scope="row"><Link to={`/players/${batter.playerId}`}>{batter.playerName}</Link></th>
-                    {toArray(data.bowlers).map((bowler) => {
+                    {bowlers.map((bowler) => {
                       const cell = cells.get(`${batter.playerId}:${bowler.playerId}`);
                       const self = batter.playerId === bowler.playerId;
                       return <td key={bowler.playerId} className="num">
                         {self ? <span className="matchup-no-encounter" title="A player cannot face themselves">N/A</span>
                           : cell?.stats.deliveries > 0 ? <button type="button" className="matchup-cell"
-                            aria-label={`${batter.playerName} against ${bowler.playerName}: ${metricLabel} ${matchupValue(cell.stats, metric)}`}
-                            title={`${cell.stats.runs} runs · ${cell.stats.ballsFaced} balls · ${cell.stats.dismissals} dismissals`}
-                            onClick={() => setSelected(cell)}>{matchupValue(cell.stats, metric)}</button>
+                            aria-label={`${batter.playerName} against ${bowler.playerName}: ${cell.stats.dismissals} dismissals, ${cell.stats.runs} runs (${cell.stats.ballsFaced} balls); Avg: ${matchupValue(cell.stats, 'average')}; SR: ${matchupValue(cell.stats, 'strikeRate')}`}
+                            onClick={() => setSelected(cell)}>
+                            <strong className="matchup-cell-score">{cell.stats.dismissals}/{cell.stats.runs} ({cell.stats.ballsFaced})</strong>
+                            <span className="matchup-cell-rates"><span>Avg: {matchupValue(cell.stats, 'average')}</span><span>SR: {matchupValue(cell.stats, 'strikeRate')}</span></span>
+                          </button>
                             : <span className="matchup-no-encounter" title="No recorded encounters within these filters">—</span>}
                       </td>;
                     })}
                   </tr>)}</tbody>
                 </table>
               </div>
-              <p className="matchup-matrix-note">— means no recorded encounter or an undefined rate. A recorded zero remains selectable.</p>
-              <Pagination data={data.batters} label="Batters" onChange={(next) => changePage(setBatterPage, next)} />
-              <Pagination data={data.bowlers} label="Bowlers" onChange={(next) => changePage(setBowlerPage, next)} />
+              <p className="matchup-matrix-note">Scroll down for batters and across for bowlers. — means no recorded encounter or an undefined rate. A recorded zero remains selectable.</p>
             </div>)}
       {selected && <PairMatchup key={`${selected.batter.playerId}:${selected.bowler.playerId}`} batterId={selected.batter.playerId} bowlerId={selected.bowler.playerId} filters={filters} onClose={() => setSelected(null)} />}
     </>
@@ -229,7 +228,6 @@ export function TeamComparison({ filters, initialBattingTeamId = '', initialBowl
   const id = useId();
   const [battingTeam, setBattingTeam] = useState(initialBattingTeamId);
   const [bowlingTeam, setBowlingTeam] = useState(initialBowlingTeamId);
-  const [metric, setMetric] = useState('runs');
   const { data, loading, error, reload } = useApi('/teams');
   const teams = [...toArray(data)].sort((a, b) => teamName(a).localeCompare(teamName(b)));
   const valid = canComparePlayers(battingTeam, bowlingTeam);
@@ -251,16 +249,11 @@ export function TeamComparison({ filters, initialBattingTeamId = '', initialBowl
           </select>
         </label>
         <button type="button" className="matchup-button" disabled={!valid} onClick={() => { setBattingTeam(bowlingTeam); setBowlingTeam(battingTeam); }}>Swap teams</button>
-        <label htmlFor={`${id}-metric`}>Cell statistic
-          <select id={`${id}-metric`} className="control-select" value={metric} onChange={(e) => setMetric(e.target.value)}>
-            {MATCHUP_METRICS.map((entry) => <option key={entry.key} value={entry.key}>{entry.label}</option>)}
-          </select>
-        </label>
       </div>
       <p className="matchup-note">Teams choose the players shown. Each pair includes encounters across every represented team, within your filters.</p>
       <p className="matchup-note">Squads use the selected season, or all recorded seasons. Dates, venue, innings, and bowling style filter the encounters.</p>
       {battingTeam && bowlingTeam && !valid && <p className="matchup-filter-error" role="alert">Select two different teams.</p>}
-      {valid ? <TeamMatrix key={`${battingTeam}:${bowlingTeam}:${JSON.stringify(filters)}`} battingTeam={battingTeam} bowlingTeam={bowlingTeam} filters={filters} metric={metric} />
+      {valid ? <TeamMatrix key={`${battingTeam}:${bowlingTeam}:${JSON.stringify(filters)}`} battingTeam={battingTeam} bowlingTeam={bowlingTeam} filters={filters} />
         : !battingTeam || !bowlingTeam ? <EmptyState title="Choose two teams" message="Compare their batters and bowlers using the players’ encounter histories." /> : null}
     </div>
   );

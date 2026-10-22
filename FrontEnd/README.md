@@ -64,7 +64,10 @@ Season and inclusive match-date filters intersect; encounters always follow the
 players across every team they represented. Team selection chooses matrix squad
 members, with season controlling roster membership. Matchups are read-only and
 need no SQL backfill. See [backend matchup documentation](../Backend/MATCHUPS.md)
-for scoring definitions, pagination, filters, and roster rules.
+for scoring definitions, filters, and roster rules. Team matrices load every
+batter and bowler into one grid that scrolls in both directions, with fixed name
+headers. Each populated cell shows `dismissals/runs (balls)`, then `Avg:` and
+`SR:` together. Opponent lists and match/innings histories retain pagination.
 
 Delivery changes and scorecard rebuilds run in one backend transaction, with a
 per-match lock for concurrent writes. The calculator is tested separately from

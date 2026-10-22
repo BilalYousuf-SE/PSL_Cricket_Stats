@@ -1,6 +1,7 @@
 package com.cricket.stats.controller;
 
-import com.cricket.stats.dto.MatchupFilterDTO;
+import com.cricket.stats.dto.*;
+import java.util.List;
 import com.cricket.stats.service.MatchupService;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
@@ -36,9 +37,21 @@ class MatchupControllerTest {
         verify(service).opponents(eq(1L), eq("bowling"), any(MatchupFilterDTO.class), eq(0), eq(25));
         mvc.perform(get("/matchups/players/1/2/matches").param("page", "2")).andExpect(status().isOk());
         verify(service).matches(eq(1L), eq(2L), any(MatchupFilterDTO.class), eq(2), eq(25));
-        mvc.perform(get("/matchups/teams").param("battingTeamId", "10").param("bowlingTeamId", "20")
-                .param("batterPage", "1").param("bowlerPage", "2")).andExpect(status().isOk());
-        verify(service).matrix(eq(10), eq(20), any(MatchupFilterDTO.class), eq(1), eq(2), eq(10));
+        mvc.perform(get("/matchups/teams").param("battingTeamId", "10").param("bowlingTeamId", "20"))
+                .andExpect(status().isOk());
+        verify(service).matrix(eq(10), eq(20), any(MatchupFilterDTO.class));
+    }
+
+    @Test
+    void returnsCompleteMatrixAxesAsLists() throws Exception {
+        var roster = java.util.stream.LongStream.rangeClosed(1, 26)
+                .mapToObj(id -> new MatchupPlayerDTO(id, "Player " + id, "FastMedium")).toList();
+        when(service.matrix(eq(10), eq(20), any(MatchupFilterDTO.class)))
+                .thenReturn(new MatchupMatrixDTO(10, "Team A", 20, "Team B", roster, roster, List.of()));
+        mvc.perform(get("/matchups/teams").param("battingTeamId", "10").param("bowlingTeamId", "20"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.batters.length()").value(26))
+                .andExpect(jsonPath("$.bowlers.length()").value(26))
+                .andExpect(jsonPath("$.batters[25].playerId").value(26));
     }
 
     @ParameterizedTest

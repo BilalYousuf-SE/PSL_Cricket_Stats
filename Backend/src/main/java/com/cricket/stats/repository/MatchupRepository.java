@@ -142,7 +142,7 @@ public class MatchupRepository {
     }
 
     /** Season selects squad membership. Date, venue, and innings filter encounters only. */
-    public Page<MatchupPlayerDTO> roster(Integer teamId, Integer seasonYear, boolean bowlers, Pageable page) {
+    public List<MatchupPlayerDTO> roster(Integer teamId, Integer seasonYear, boolean bowlers) {
         var params = new MapSqlParameterSource("teamId", teamId);
         String from = " FROM match_squads ms JOIN player p ON p.id = ms.player_id JOIN matches m ON m.match_id = ms.match_id"
                 + " LEFT JOIN season s ON s.season_id = m.season_id WHERE ms.team_id = :teamId AND COALESCE(ms.is_playing, TRUE) = TRUE";
@@ -155,12 +155,9 @@ public class MatchupRepository {
             from += " AND (p.bowling_style IS NOT NULL OR p.role IN ('Baller', 'Allrounder')"
                     + " OR EXISTS (SELECT 1 FROM deliveries d WHERE d.bowler_id = p.id))";
         }
-        Long total = jdbc.queryForObject("SELECT COUNT(DISTINCT p.id)" + from, params, Long.class);
-        params.addValue("limit", page.getPageSize()).addValue("offset", page.getOffset());
-        var rows = jdbc.query("SELECT DISTINCT p.id, " + playerName("p") + " AS player_name, p.bowling_style" + from
-                + " ORDER BY player_name, p.id LIMIT :limit OFFSET :offset", params,
+        return jdbc.query("SELECT DISTINCT p.id, " + playerName("p") + " AS player_name, p.bowling_style" + from
+                + " ORDER BY player_name, p.id", params,
                 (rs, row) -> new MatchupPlayerDTO(rs.getLong("id"), rs.getString("player_name"), rs.getString("bowling_style")));
-        return new PageImpl<>(rows, page, total == null ? 0 : total);
     }
 
     public MatchupOptionsDTO options() {

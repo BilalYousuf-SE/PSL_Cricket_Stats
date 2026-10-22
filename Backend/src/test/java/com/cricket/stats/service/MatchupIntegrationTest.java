@@ -140,35 +140,52 @@ class MatchupIntegrationTest {
     void matrixUsesTheSamePairHistoryEvenWhenTeamsHaveNeverFacedEachOther() {
         sample();
         var filter = new MatchupFilterDTO();
-        var matrix = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter, 0, 0, 10);
-        assertThat(matrix.batters().getContent()).extracting(MatchupPlayerDTO::playerId).containsExactly(batter.getId());
-        assertThat(matrix.bowlers().getContent()).extracting(MatchupPlayerDTO::playerId).containsExactly(bowler.getId());
+        var matrix = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter);
+        assertThat(matrix.batters()).extracting(MatchupPlayerDTO::playerId).containsExactly(batter.getId());
+        assertThat(matrix.bowlers()).extracting(MatchupPlayerDTO::playerId).containsExactly(bowler.getId());
         assertThat(matrix.cells()).hasSize(1);
         assertThat(matrix.cells().get(0)).isEqualTo(pair());
         filter.setSeasonYear(2025);
-        var seasonal = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter, 0, 0, 10);
+        var seasonal = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter);
         assertThat(seasonal.cells().get(0)).isEqualTo(pair(filter));
         assertThat(seasonal.cells().get(0).stats().runs()).isEqualTo(7);
         // Date ranges narrow encounters without removing the chosen season's squad members.
         filter.setToDate(LocalDate.parse("2025-02-01"));
-        assertThat(service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter, 0, 0, 10).cells())
+        assertThat(service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), filter).cells())
                 .hasSize(1);
     }
 
     @Test
-    void includesOccasionalBowlersAndPaginatesDistinctSquadMembersWithoutDuplicatingCells() {
+    void includesOccasionalBowlersAndDistinctSquadMembersWithoutDuplicatingCells() {
         sample();
         delivery(second, batter, other, 2, 0, null); // keeper with a recorded bowling delivery
         member(second, bowler, bowlingTeam); // same player in multiple match squads
         member(rosterMatch, bowler, battingTeam); // historic membership in both teams is allowed
         em.flush();
-        var matrix = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO(), 0, 0, 1);
-        assertThat(matrix.batters().getTotalElements()).isEqualTo(2);
-        assertThat(matrix.bowlers().getTotalElements()).isEqualTo(2);
-        assertThat(matrix.cells()).hasSize(1);
-        var next = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO(), 1, 1, 1);
-        assertThat(next.cells()).isEmpty(); // self-pair/never-met cells are not invented
-        assertThat(service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO(), 99, 99, 10).cells()).isEmpty();
+        var matrix = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO());
+        assertThat(matrix.batters()).hasSize(2);
+        assertThat(matrix.bowlers()).hasSize(2);
+        assertThat(matrix.cells()).hasSize(2);
+        assertThat(matrix.cells()).allSatisfy(cell -> assertThat(cell.batter().playerId()).isNotEqualTo(cell.bowler().playerId()));
+    }
+
+    @Test
+    void matrixIncludesEveryRosterMemberAndEncountersBeyondTheFormerPageLimits() {
+        Player lastBatter = null, lastBowler = null;
+        for (int i = 0; i < 25; i++) {
+            lastBatter = player("Late batter " + i, Roles.Batsman, null);
+            member(rosterMatch, lastBatter, battingTeam);
+            lastBowler = player("Late bowler " + i, Roles.Baller, BowlingStyle.FastMedium);
+            member(rosterMatch, lastBowler, bowlingTeam);
+        }
+        // This pair's encounter occurred while representing other teams.
+        delivery(first, lastBatter, lastBowler, 6, 0, null);
+        em.flush();
+        var matrix = service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO());
+        assertThat(matrix.batters()).hasSize(26);
+        assertThat(matrix.bowlers()).hasSize(26);
+        assertThat(matrix.cells()).containsExactly(service.pair(lastBatter.getId(), lastBowler.getId(), new MatchupFilterDTO()));
+        assertThat(matrix.cells().get(0).stats().runs()).isEqualTo(6);
     }
 
     @Test
@@ -224,8 +241,8 @@ class MatchupIntegrationTest {
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("perspective");
         assertThatThrownBy(() -> service.opponents(batter.getId(), "batting", new MatchupFilterDTO(), -1, 25))
                 .isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> service.matrix(battingTeam.getTeamId(), bowlingTeam.getTeamId(), new MatchupFilterDTO(), 0, 0, 1000))
-                .isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> service.matrix(battingTeam.getTeamId(), battingTeam.getTeamId(), new MatchupFilterDTO()))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("different teams");
     }
 
     private MatchupDTO pair() { return pair(new MatchupFilterDTO()); }

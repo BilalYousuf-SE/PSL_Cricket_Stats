@@ -37,13 +37,14 @@ positions are not innings-specific.
 | `/matchups/players/{playerId}?perspective=batting` | Paged opponents, most balls faced first |
 | `/matchups/players/{playerId}?perspective=bowling` | Paged batters faced by this bowler |
 | `/matchups/players/{batterId}/{bowlerId}/matches` | Paged match/innings breakdown, newest first |
-| `/matchups/teams?battingTeamId=1&bowlingTeamId=2` | Paged squad rows/columns and observed pair cells |
+| `/matchups/teams?battingTeamId=1&bowlingTeamId=2` | Complete squad rows/columns and observed pair cells |
 
 Opponent and breakdown pages use zero-based `page` and `size` (default 25, maximum
-100). The matrix uses independent zero-based `batterPage`/`bowlerPage` and `size`
-(default 10, maximum 20 per axis). It fetches at most 400 observed pairs at once;
-there is no query for each individual cell. Matrix statistics support both bowling
-directions by swapping teams. Identical player or team selections return 400;
+100). The matrix returns complete `batters` and `bowlers` arrays, plus all observed
+pair cells for those rosters, in one response. It has no paging parameters or
+roster truncation. One aggregation computes the cells; there is no query for each
+individual cell. Matrix statistics support both bowling directions by swapping
+teams. Identical player or team selections return 400;
 unknown player/team IDs return 404.
 
 ### Team matrix membership
@@ -63,7 +64,8 @@ represented both teams can appear on both axes; their self-cell is `N/A`.
 An absent cell means no recorded encounter under the filters. An observed
 zero-run encounter is still a populated, selectable cell. The API returns empty
 statistics for a valid direct pair with no encounters and empty lists for empty
-filters. The matrix supplies roster page totals separately from observed cells.
+filters. The complete roster arrays supply both matrix axes, including players
+without encounters under the selected filters.
 
 ## Scoring definitions
 
@@ -97,10 +99,14 @@ The public navigation includes `/matchups` with player and team-matrix views.
 Player profiles have batting/bowling opponent lists, and team profiles have a
 matrix with their batting team preselected. Selecting an opponent or populated
 matrix cell opens the pair summary and match/innings history under the same
-filters. Changing the matrix statistic uses already fetched totals.
+filters. The full matrix scrolls vertically through batters and horizontally
+through bowlers, with names fixed on both axes. Every populated cell shows
+`dismissals/runs (balls faced)`, with `Avg:` and `SR:` immediately below; undefined
+rates remain `—`. There are no matrix page controls or statistic selector.
 
 Backend regression coverage runs with `mvn verify` against an isolated MySQL 8+
 database. It includes the 45-runs/30-balls/2-dismissals example, extras and wicket
 rules, historical team changes, assigned seasons, inclusive/open date ranges,
-combined filters, actual SQL pagination, empty encounters, and delivery edits.
+combined filters, complete matrices beyond the former roster limits, opponent
+and breakdown pagination, empty encounters, and delivery edits.
 Frontend tests run with `npm test`; the production build uses `npm run build`.

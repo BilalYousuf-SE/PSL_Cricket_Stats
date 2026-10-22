@@ -41,9 +41,7 @@ public class MatchupController {
 
     @GetMapping("/teams")
     public MatchupMatrixDTO matrix(@RequestParam Integer battingTeamId, @RequestParam Integer bowlingTeamId,
-            @Valid @ModelAttribute MatchupFilterDTO filter,
-            @RequestParam(defaultValue = "0") int batterPage, @RequestParam(defaultValue = "0") int bowlerPage,
-            @RequestParam(defaultValue = "10") int size) {
-        return service.matrix(battingTeamId, bowlingTeamId, filter, batterPage, bowlerPage, size);
+            @Valid @ModelAttribute MatchupFilterDTO filter) {
+        return service.matrix(battingTeamId, bowlingTeamId, filter);
     }
 }

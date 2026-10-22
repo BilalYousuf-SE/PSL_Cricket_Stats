@@ -51,18 +51,15 @@ public class MatchupService {
         return matchups.matches(batterId, bowlerId, filter, pageable);
     }
 
-    public MatchupMatrixDTO matrix(Integer battingTeamId, Integer bowlingTeamId, MatchupFilterDTO filter,
-                                   int batterPage, int bowlerPage, int size) {
+    public MatchupMatrixDTO matrix(Integer battingTeamId, Integer bowlingTeamId, MatchupFilterDTO filter) {
         validate(filter);
-        var battingPage = page(batterPage, size, 20);
-        var bowlingPage = page(bowlerPage, size, 20);
         requireDifferent(battingTeamId, bowlingTeamId, "teams");
         var battingTeam = teams.findById(battingTeamId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Batting team not found"));
         var bowlingTeam = teams.findById(bowlingTeamId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Bowling team not found"));
-        var batters = matchups.roster(battingTeamId, filter.getSeasonYear(), false, battingPage);
-        var bowlers = matchups.roster(bowlingTeamId, filter.getSeasonYear(), true, bowlingPage);
+        var batters = matchups.roster(battingTeamId, filter.getSeasonYear(), false);
+        var bowlers = matchups.roster(bowlingTeamId, filter.getSeasonYear(), true);
         var cells = matchups.pairs(filter, batters.stream().map(MatchupPlayerDTO::playerId).toList(),
                 bowlers.stream().map(MatchupPlayerDTO::playerId).toList());
         return new MatchupMatrixDTO(battingTeamId, battingTeam.getTeamName(), bowlingTeamId,
