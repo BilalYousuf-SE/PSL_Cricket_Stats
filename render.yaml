@@ -1,0 +1,48 @@
+# https://render.com/docs/blueprint-spec
+# Create Neon PostgreSQL and copy the existing data first; see DEPLOYMENT.md.
+services:
+  - type: web
+    name: psl-stats-api
+    runtime: docker
+    plan: free
+    branch: work
+    dockerfilePath: ./Backend/Dockerfile
+    dockerContext: ./Backend
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - Backend/**
+        - render.yaml
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: staging
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+  - type: web
+    name: psl-stats-ui
+    runtime: static
+    branch: work
+    rootDir: FrontEnd
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: ./dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: psl-stats-api
+          envVarKey: RENDER_EXTERNAL_URL
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

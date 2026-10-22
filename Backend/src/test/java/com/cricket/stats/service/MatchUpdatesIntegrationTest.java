@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.admin.password=integration-test-admin")
 @AutoConfigureMockMvc
 class MatchUpdatesIntegrationTest {
     @Autowired MatchService matches;
@@ -134,6 +134,7 @@ class MatchUpdatesIntegrationTest {
     @Test
     void rejectsIncompleteDeliveryRequestsAndRestoresExtrasEndpoint() throws Exception {
         mvc.perform(post("/matches/" + matchId + "/deliveries")
+                .header("X-Admin-Password", "integration-test-admin")
                 .contentType("application/json").content("{}"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.message").isNotEmpty());
         assertThat(matches.getDeliveries(matchId)).isEmpty();

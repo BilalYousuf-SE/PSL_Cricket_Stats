@@ -12,11 +12,22 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-/** One aggregation for individual comparisons, opponent lists, and matrix cells. MySQL 8+. */
+/** Shared aggregation for individual comparisons, opponent lists, and matrix cells. */
 @Repository
 @RequiredArgsConstructor
 public class MatchupRepository {
     private final NamedParameterJdbcTemplate jdbc;
+
+    // Match ScorecardCalculator's normalization without vendor-specific regexp flags.
+    private static final List<String> SEPARATORS = List.of(" ", "_", "-", "\t", "\n", "\r", "\f", "\u000b");
+
+    private static String normalized(String column) {
+        String result = "LOWER(COALESCE(" + column + ", ''))";
+        for (int i = 0; i < SEPARATORS.size(); i++) {
+            result = "REPLACE(" + result + ", :separator" + i + ", '')";
+        }
+        return result;
+    }
 
     private static String playerName(String alias) {
         return "COALESCE(NULLIF(TRIM(" + alias + ".full_name), ''), NULLIF(TRIM(CONCAT_WS(' ', "
@@ -25,19 +36,21 @@ public class MatchupRepository {
 
     private static final String AGGREGATES = """
             COUNT(*) AS deliveries, COUNT(DISTINCT match_id) AS matches,
-            COUNT(DISTINCT match_id, innings) AS innings_count,
+            COUNT(DISTINCT CASE WHEN match_id IS NOT NULL AND innings IS NOT NULL
+                               THEN CONCAT(match_id, ':', innings) END) AS innings_count,
             SUM(runs_batter) AS runs, SUM(ball_faced) AS balls_faced,
-            SUM(legal_ball) AS legal_balls, SUM(runs_batter = 4) AS fours,
-            SUM(runs_batter = 6) AS sixes,
-            SUM(legal_ball = 1 AND runs_batter + runs_extras = 0) AS dot_balls,
+            SUM(legal_ball) AS legal_balls, SUM(CASE WHEN runs_batter = 4 THEN 1 ELSE 0 END) AS fours,
+            SUM(CASE WHEN runs_batter = 6 THEN 1 ELSE 0 END) AS sixes,
+            SUM(CASE WHEN legal_ball = 1 AND runs_batter + runs_extras = 0 THEN 1 ELSE 0 END) AS dot_balls,
             SUM(bowler_wicket) AS dismissals,
-            SUM(wicket_kind = 'runout' AND player_dismissed_id = batter_id) AS run_outs,
+            SUM(CASE WHEN wicket_kind = 'runout' AND player_dismissed_id = batter_id THEN 1 ELSE 0 END) AS run_outs,
             SUM(runs_batter + CASE WHEN extra_kind LIKE '%wide%' OR extra_kind LIKE '%noball%'
                                   THEN runs_extras ELSE 0 END) AS runs_conceded
             """;
 
     private String source(MatchupFilterDTO filter, MapSqlParameterSource params,
                           List<Long> batterIds, List<Long> bowlerIds) {
+        for (int i = 0; i < SEPARATORS.size(); i++) params.addValue("separator" + i, SEPARATORS.get(i));
         StringBuilder where = new StringBuilder(" WHERE d.batter_id <> d.bowler_id");
         if (batterIds != null) {
             where.append(" AND d.batter_id IN (:batterIds)");
@@ -77,13 +90,13 @@ public class MatchupRepository {
                   SELECT d.match_id, d.batter_id, d.bowler_id, d.innings, d.player_dismissed_id,
                          COALESCE(d.runs_batter, 0) AS runs_batter,
                          COALESCE(d.runs_extras, 0) AS runs_extras,
-                         REGEXP_REPLACE(LOWER(COALESCE(d.extra_type, '')), '[[:space:]_-]+', '') AS extra_kind,
-                         REGEXP_REPLACE(LOWER(COALESCE(d.wicket_type, '')), '[[:space:]_-]+', '') AS wicket_kind,
+                         %s AS extra_kind,
+                         %s AS wicket_kind,
                          m.match_date, s.season_year, m.venue, m.team_a_id, m.team_b_id
                   FROM deliveries d JOIN matches m ON m.match_id = d.match_id
                   LEFT JOIN season s ON s.season_id = m.season_id
                   JOIN player bp ON bp.id = d.bowler_id
-                """ + where + """
+                """.formatted(normalized("d.extra_type"), normalized("d.wicket_type")) + where + """
                 ), encounters AS (
                   SELECT normalized.*,
                          CASE WHEN extra_kind LIKE '%wide%' THEN 0 ELSE 1 END AS ball_faced,

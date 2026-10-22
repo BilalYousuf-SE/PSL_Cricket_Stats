@@ -2,6 +2,7 @@
 
 Matchups aggregate recorded deliveries on demand. They do not create stored matchup
 records and need no data backfill. Updating a delivery changes subsequent results.
+The aggregation supports PostgreSQL and MySQL 8; scoring and filters are identical.
 The backend's existing `ddl-auto=update` setup creates the two delivery lookup
 indexes declared in `Delivery`; no manual SQL import is required.
 

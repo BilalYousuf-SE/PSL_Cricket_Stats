@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.*;
 
-/** Exercises the actual MySQL aggregation, including history outside selected teams. */
+/** Exercises the actual database aggregation, including history outside selected teams. */
 @SpringBootTest
 @Transactional
 class MatchupIntegrationTest {
@@ -95,6 +95,20 @@ class MatchupIntegrationTest {
         assertThat(stats.strikeRate()).isEqualByComparingTo("77.78");
         assertThat(stats.average()).isEqualByComparingTo("3.50");
         assertThat(stats.economy()).isEqualByComparingTo("10.29");
+    }
+
+    @Test
+    void normalizesEverySeparatorAcrossBothDatabaseEngines() {
+        dismiss(delivery(first, batter, bowler, 6, 1, " No _\t- Ball\r\n"), "caught", batter);
+        dismiss(delivery(first, batter, bowler, 0, 0, null), " r u n_\t- o u t\r\n", batter);
+        em.flush();
+        var stats = pair().stats();
+        assertThat(stats.runs()).isEqualTo(6);
+        assertThat(stats.ballsFaced()).isEqualTo(2);
+        assertThat(stats.legalBalls()).isEqualTo(1);
+        assertThat(stats.sixes()).isEqualTo(1);
+        assertThat(stats.dismissals()).isZero();
+        assertThat(stats.runOuts()).isEqualTo(1);
     }
 
     @Test

@@ -1,5 +1,8 @@
 # Player roles and styles
 
+The SQL files in this directory target MySQL. For a PostgreSQL deployment and a
+copy of existing data, use [the PostgreSQL migration guide](postgresql/README.md).
+
 Back up your database and stop the backend. Select the database in MySQL
 Workbench and execute `player-enums-migration.sql`, then start the updated app.
 Do not start the new app against unmigrated old enum data. MySQL DDL commits

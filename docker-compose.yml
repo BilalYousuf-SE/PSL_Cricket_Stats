@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Backend
     restart: unless-stopped
     depends_on:
       mysql:
@@ -28,15 +28,15 @@ services:
       DB_URL: jdbc:mysql://mysql:3306/psl
       DB_USER: cricket_user
       DB_PASSWORD: ${DB_PASSWORD}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - "8080:8080"
 
   frontend:
     build:
-      context: ./frontend
+      context: ./FrontEnd
       args:
         VITE_API_URL: http://localhost:8080
-        VITE_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     restart: unless-stopped
     depends_on:
       - backend

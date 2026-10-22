@@ -14,7 +14,7 @@ npm run build
 
 The development server uses port 5173. The API defaults to port 8080; set
 `VITE_API_BASE_URL` in `.env.local` to use another backend. The backend needs a
-MySQL `psl` database; its datasource can be configured using Spring's
+MySQL or PostgreSQL database; its datasource can be configured using Spring's
 `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and
 `SPRING_DATASOURCE_PASSWORD` environment variables. No dataset is included.
 
@@ -76,10 +76,15 @@ Scorecards are stored per match and player, so separate innings by the same
 player are combined by the existing schema.
 
 `VITE_API_BASE_URL` and the Docker setup's `VITE_API_URL` are both supported;
-`VITE_API_BASE_URL` takes precedence. The existing `VITE_ADMIN_PASSWORD` screen
-is only a browser gate; the backend currently does not authenticate write
-requests. Do not expose these mutation endpoints publicly without server-side
-authentication. `.env` files should remain local and untracked.
+`VITE_API_BASE_URL` takes precedence. Set `ADMIN_PASSWORD` on the backend for
+admin sign-in and write access. The browser verifies sign-in with `/admin/auth`
+and sends the credential with every mutation. A tab retains its credential in
+session storage until sign-out or tab closure. Public GET requests stay open;
+writes fail when the backend password is missing. Remove the obsolete frontend
+`VITE_ADMIN_PASSWORD` variable. `.env` files should remain local and untracked.
+
+See [DEPLOYMENT.md](../DEPLOYMENT.md) for free Render hosting with Neon PostgreSQL
+and automatic deployment from the `work` branch.
 
 
 ## Player role/style migration

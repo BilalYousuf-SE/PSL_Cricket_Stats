@@ -7,9 +7,7 @@ WORKDIR /app
 # docker-compose.yml would be too late to affect the already-built bundle.
 # These must come in as build args instead.
 ARG VITE_API_URL
-ARG VITE_ADMIN_PASSWORD
 ENV VITE_API_URL=$VITE_API_URL
-ENV VITE_ADMIN_PASSWORD=$VITE_ADMIN_PASSWORD
 
 COPY package*.json ./
 RUN npm ci

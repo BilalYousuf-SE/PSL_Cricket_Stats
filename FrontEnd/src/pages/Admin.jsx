@@ -1,35 +1,38 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FormModal } from './adminCore.jsx';
-import { adminApi as api } from '../api.js';
+import { adminApi as api, verifyAdminPassword } from '../api.js';
 import { toArray as asRows } from '../fields.js';
 import { useApi } from '../useApi.js';
 import '../motion.css';
 import '../admin.css';
 import { ENTITIES, MATCH_ENTITIES } from '../adminEntities.js';
 
-/* ---------- config ---------- */
-const PASS = import.meta.env.VITE_ADMIN_PASSWORD;
-
 /* ---------- login ---------- */
 function Login({ onOk }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
-  const submit = (e) => {
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
     e.preventDefault();
-    if (pw && pw === PASS) { sessionStorage.setItem('cd_admin', pw); onOk(); }
-    else setErr('Wrong password');
+    setBusy(true);
+    setErr('');
+    try {
+      await verifyAdminPassword(pw);
+      sessionStorage.setItem('cd_admin', pw);
+      onOk();
+    } catch (error) { setErr(error.message); }
+    finally { setBusy(false); }
   };
   return (
     <div className="admin-login">
       <form className="scorecard admin-login-card" onSubmit={submit}>
         <div className="scorecard-header"><h3>Admin sign-in</h3></div>
         <div className="admin-form">
-          <input className="admin-input" type="password" autoFocus placeholder="Password"
+          <input className="admin-input" type="password" autoFocus required autoComplete="current-password" placeholder="Password"
             value={pw} onChange={(e) => { setPw(e.target.value); setErr(''); }} />
           {err && <div className="admin-err">{err}</div>}
-          {!PASS && <div className="admin-err">VITE_ADMIN_PASSWORD is not set.</div>}
-          <button className="admin-btn primary" type="submit">Enter</button>
+          <button className="admin-btn primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Enter'}</button>
         </div>
       </form>
     </div>
@@ -133,11 +136,28 @@ export default function Admin() {
   const { matchId } = useParams();
   const navigate = useNavigate();
   const [routeError, setRouteError] = useState('');
-  const [authed, setAuthed] = useState(() => !!PASS && sessionStorage.getItem('cd_admin') === PASS);
+  const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(() => !!sessionStorage.getItem('cd_admin'));
   const [tab, setTab] = useState('teams');
   const [refData, setRefData] = useState({ teams: [], seasons: [], players: [], squad: [] });
   const [activeMatch, setActiveMatch] = useState(null);
   const [matchTab, setMatchTab] = useState('squad');
+
+  useEffect(() => {
+    const password = sessionStorage.getItem('cd_admin');
+    if (!password) return;
+    const controller = new AbortController();
+    verifyAdminPassword(password, { signal: controller.signal }).then(
+      () => { if (!controller.signal.aborted) { setAuthed(true); setChecking(false); } },
+      (error) => {
+        if (error.name !== 'AbortError') {
+          sessionStorage.removeItem('cd_admin');
+          setChecking(false);
+        }
+      }
+    );
+    return () => controller.abort();
+  }, []);
 
   const loadRefData = useCallback(async () => {
     try {
@@ -182,6 +202,7 @@ export default function Admin() {
     return () => { active = false; };
   }, [authed, matchId]);
 
+  if (checking) return <div className="admin-empty" role="status">Checking admin sign-in…</div>;
   if (!authed) return <Login onOk={() => setAuthed(true)} />;
 
   const logout = () => { sessionStorage.removeItem('cd_admin'); setAuthed(false); };

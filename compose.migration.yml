@@ -1,0 +1,22 @@
+# One-time copy from the existing Compose MySQL service to Neon PostgreSQL.
+# See Backend/database/postgresql/README.md. This never removes MySQL data.
+services:
+  migrate-postgres:
+    build:
+      context: ./Backend/database/postgresql
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_DATABASE: psl
+      MYSQL_USER: cricket_user
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      PGHOST: ${PGHOST:?Set PGHOST in .env.postgres}
+      PGPORT: ${PGPORT:-5432}
+      PGDATABASE: ${PGDATABASE:?Set PGDATABASE in .env.postgres}
+      PGUSER: ${PGUSER:?Set PGUSER in .env.postgres}
+      PGPASSWORD: ${PGPASSWORD:?Set PGPASSWORD in .env.postgres}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /etc/ssl/certs/ca-certificates.crt

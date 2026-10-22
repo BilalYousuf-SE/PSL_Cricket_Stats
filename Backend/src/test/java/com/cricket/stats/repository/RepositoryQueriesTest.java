@@ -9,15 +9,17 @@ import com.cricket.stats.entity.Team;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.data.jpa.repository.Query;
 
 class RepositoryQueriesTest {
-    @Test
-    void squadOrderingAndPartnershipQueriesResolveAgainstTheEntityMappings() {
+    @ParameterizedTest
+    @ValueSource(strings = {"org.hibernate.dialect.MySQLDialect", "org.hibernate.dialect.PostgreSQLDialect"})
+    void squadOrderingAndPartnershipQueriesResolveAgainstTheEntityMappings(String dialect) {
         // Validate JPQL with Hibernate itself; no connection or database is needed.
         var registry = new StandardServiceRegistryBuilder()
-                .applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect")
+                .applySetting("hibernate.dialect", dialect)
                 .applySetting("hibernate.temp.use_jdbc_metadata_defaults", "false")
                 .applySetting("hibernate.hbm2ddl.auto", "none")
                 .build();
