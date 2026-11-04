@@ -51,7 +51,7 @@ export function AnimatedNumber({ value, duration = 700, fallback = '—' }) {
 
 // Fades an element up into place the first time it scrolls into view, then
 // stops watching — it never re-triggers if you scroll back past it.
-export function useRevealOnScroll(threshold = 0.15) {
+export function useRevealOnScroll(threshold = 0) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
