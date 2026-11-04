@@ -230,12 +230,12 @@ export default function PlayerDetail() {
             </Reveal>
           </div>
 
-          <h3 className="section-heading section-spacer">Matches Played</h3>
-          <Reveal className="scorecard">
+          <h3 className="section-heading section-spacer" id="player-match-history-heading">Matches Played</h3>
+          <section className="scorecard" aria-labelledby="player-match-history-heading">
             <div className="scorecard-body">
               <MatchHistorySection matches={matchList} />
             </div>
-          </Reveal>
+          </section>
         </>
       )}
     </div>

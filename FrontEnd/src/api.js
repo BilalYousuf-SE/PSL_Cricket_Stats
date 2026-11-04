@@ -54,6 +54,14 @@ export const api = {
 
 export { ApiError, BASE_URL };
 
+export function verifyAdminPassword(password, options = {}) {
+  return request('/admin/auth', {
+    ...options,
+    method: 'POST',
+    headers: { 'X-Admin-Password': password },
+  });
+}
+
 // All admin mutations use the same URL and error handling as the public UI.
 export function adminApi(method, path, body) {
   return request(path, {

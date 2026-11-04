@@ -35,27 +35,30 @@ export function FormModal({ ent, row, refData, onClose, onSave }) {
   const submit = async (e) => {
     e.preventDefault();
     const body = serializeForm(ent.f, v);
+    const validationError = ent.validate?.(body, refData);
+    if (validationError) { setErr(validationError); return; }
     setBusy(true); setErr('');
     try { await onSave(body); onClose(); } catch (ex) { setErr(ex.message); setBusy(false); }
   };
 
   const optionsFor = (f) => {
+    if (f.getOptions) return f.getOptions(v, refData);
     if (f.options) return f.options.map((option) => typeof option === 'string' ? { value: option, label: option } : option);
     if (f.optionsFrom) return refData[f.optionsFrom] || [];
     return [];
   };
 
   return createPortal(
-    <div className="admin-overlay" onMouseDown={onClose}>
+    <div className="admin-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title" onMouseDown={onClose}>
       <form className="scorecard admin-modal" onMouseDown={(e) => e.stopPropagation()} onSubmit={submit}>
         <div className="scorecard-header">
-          <h3>{editing ? 'Edit' : 'Add'} · {ent.l}</h3>
-          <button type="button" className="admin-btn" onClick={onClose}>✕</button>
+          <h3 id="admin-modal-title">{editing ? 'Edit' : 'Add'} · {ent.l}</h3>
+          <button type="button" className="admin-btn" aria-label="Close form" onClick={onClose}>✕</button>
         </div>
         <div className="admin-form admin-grid">
           {ent.f.map((f) => (
             <label key={f.n} className={f.t === 'bool' ? 'admin-check' : ''}>
-              <span>{f.n}{f.req ? ' *' : ''}</span>
+              <span>{f.label || f.n}{f.req ? ' *' : ''}</span>
               {f.t === 'bool' ? (
                 <input type="checkbox" checked={v[f.n]} onChange={(e) => setV({ ...v, [f.n]: e.target.checked })} />
               ) : f.t === 'select' ? (
@@ -68,7 +71,7 @@ export function FormModal({ ent, row, refData, onClose, onSave }) {
                 </select>
               ) : (
                 <input className="admin-input" type={f.t === 'number' ? 'number' : f.t === 'date' ? 'date' : 'text'}
-                  step="any" required={!!f.req} disabled={editing && f.n === ent.id}
+                  min={f.min} max={f.max} step={f.step ?? 'any'} required={!!f.req} disabled={editing && f.n === ent.id}
                   value={v[f.n]} onChange={(e) => setV({ ...v, [f.n]: e.target.value })} />
               )}
             </label>

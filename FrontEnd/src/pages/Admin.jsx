@@ -1,35 +1,38 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FormModal } from './adminCore.jsx';
-import { adminApi as api } from '../api.js';
+import { adminApi as api, verifyAdminPassword } from '../api.js';
 import { toArray as asRows } from '../fields.js';
 import { useApi } from '../useApi.js';
 import '../motion.css';
 import '../admin.css';
 import { ENTITIES, MATCH_ENTITIES } from '../adminEntities.js';
 
-/* ---------- config ---------- */
-const PASS = import.meta.env.VITE_ADMIN_PASSWORD;
-
 /* ---------- login ---------- */
 function Login({ onOk }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
-  const submit = (e) => {
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
     e.preventDefault();
-    if (pw && pw === PASS) { sessionStorage.setItem('cd_admin', pw); onOk(); }
-    else setErr('Wrong password');
+    setBusy(true);
+    setErr('');
+    try {
+      await verifyAdminPassword(pw);
+      sessionStorage.setItem('cd_admin', pw);
+      onOk();
+    } catch (error) { setErr(error.message); }
+    finally { setBusy(false); }
   };
   return (
     <div className="admin-login">
       <form className="scorecard admin-login-card" onSubmit={submit}>
         <div className="scorecard-header"><h3>Admin sign-in</h3></div>
         <div className="admin-form">
-          <input className="admin-input" type="password" autoFocus placeholder="Password"
+          <input className="admin-input" type="password" autoFocus required autoComplete="current-password" placeholder="Password"
             value={pw} onChange={(e) => { setPw(e.target.value); setErr(''); }} />
           {err && <div className="admin-err">{err}</div>}
-          {!PASS && <div className="admin-err">VITE_ADMIN_PASSWORD is not set.</div>}
-          <button className="admin-btn primary" type="submit">Enter</button>
+          <button className="admin-btn primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Enter'}</button>
         </div>
       </form>
     </div>
@@ -40,6 +43,7 @@ function Login({ onOk }) {
 function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
   const { data, loading, error, reload } = useApi(url, [], { enabled: !!url });
   const rows = asRows(data);
+  const groups = ent.groupRows ? ent.groupRows(rows) : [{ key: 'all', rows }];
   const [err, setErr] = useState('');
   const [modal, setModal] = useState(null);
   const state = loading ? 'loading' : error || err ? 'error' : 'idle';
@@ -62,6 +66,7 @@ function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
 
   return (
     <>
+      {ent.description && <p className="subtle admin-panel-hint">{ent.description}</p>}
       <div className="admin-toolbar">
         <span className="subtle admin-count">{rows.length} rows</span>
         {!ent.readOnly && (
@@ -88,26 +93,33 @@ function EntityPanel({ ent, url, refData, onRowClick, onChanged }) {
                 {!ent.readOnly && <th className="num">Actions</th>}
               </tr>
             </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr
-                  key={r[ent.id] ?? i}
-                  className="row-reveal"
-                  style={{ '--i': i, cursor: onRowClick ? 'pointer' : 'default' }}
-                  onClick={onRowClick ? () => onRowClick(r) : undefined}
-                >
-                  {ent.cols.map(([key]) => (
-                    <td key={key}>{typeof r[key] === 'boolean' ? (r[key] ? '✓' : '—') : String(r[key] ?? '—')}</td>
-                  ))}
-                  {!ent.readOnly && (
-                    <td className="num admin-row-actions" onClick={(e) => e.stopPropagation()}>
-                      <button className="admin-btn sm" onClick={() => setModal({ row: r })}>Edit</button>
-                      <button className="admin-btn sm danger" onClick={() => del(r)}>Delete</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
+            {groups.map((group) => (
+              <tbody key={group.key}>
+                {group.label && (
+                  <tr className="admin-group-heading">
+                    <th scope="rowgroup" colSpan={ent.cols.length + (ent.readOnly ? 0 : 1)}>{group.label}</th>
+                  </tr>
+                )}
+                {group.rows.map((r, i) => (
+                  <tr
+                    key={r[ent.id] ?? i}
+                    className="row-reveal"
+                    style={{ '--i': i, cursor: onRowClick ? 'pointer' : 'default' }}
+                    onClick={onRowClick ? () => onRowClick(r) : undefined}
+                  >
+                    {ent.cols.map(([key]) => (
+                      <td key={key}>{typeof r[key] === 'boolean' ? (r[key] ? '✓' : '—') : String(r[key] ?? '—')}</td>
+                    ))}
+                    {!ent.readOnly && (
+                      <td className="num admin-row-actions" onClick={(e) => e.stopPropagation()}>
+                        <button className="admin-btn sm" onClick={() => setModal({ row: r })}>Edit</button>
+                        <button className="admin-btn sm danger" onClick={() => del(r)}>Delete</button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
         )}
       </div>
@@ -124,11 +136,28 @@ export default function Admin() {
   const { matchId } = useParams();
   const navigate = useNavigate();
   const [routeError, setRouteError] = useState('');
-  const [authed, setAuthed] = useState(() => !!PASS && sessionStorage.getItem('cd_admin') === PASS);
+  const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(() => !!sessionStorage.getItem('cd_admin'));
   const [tab, setTab] = useState('teams');
   const [refData, setRefData] = useState({ teams: [], seasons: [], players: [], squad: [] });
   const [activeMatch, setActiveMatch] = useState(null);
   const [matchTab, setMatchTab] = useState('squad');
+
+  useEffect(() => {
+    const password = sessionStorage.getItem('cd_admin');
+    if (!password) return;
+    const controller = new AbortController();
+    verifyAdminPassword(password, { signal: controller.signal }).then(
+      () => { if (!controller.signal.aborted) { setAuthed(true); setChecking(false); } },
+      (error) => {
+        if (error.name !== 'AbortError') {
+          sessionStorage.removeItem('cd_admin');
+          setChecking(false);
+        }
+      }
+    );
+    return () => controller.abort();
+  }, []);
 
   const loadRefData = useCallback(async () => {
     try {
@@ -144,7 +173,7 @@ export default function Admin() {
     } catch { /* individual panels still surface their own load errors */ }
   }, []);
 
-  // Deliveries' batter/bowler/dismissed-player dropdowns are scoped to the
+  // Delivery and partnership player dropdowns are scoped to the
   // active match's squad rather than every player ever recorded — reloaded
   // whenever the Squad tab changes so a just-added player shows up right away.
   const loadSquadRef = useCallback(async (matchId) => {
@@ -152,9 +181,11 @@ export default function Admin() {
       const squad = await api('GET', `/matches/${matchId}/squad`);
       setRefData((prev) => ({
         ...prev,
-        squad: asRows(squad).map((s) => ({ value: s.playerId, label: s.playerName })),
+        squad: asRows(squad).map((s) => ({
+          value: s.playerId, label: s.playerName, teamId: s.teamId, teamName: s.teamName, isPlaying: s.isPlaying,
+        })),
       }));
-    } catch { /* deliveries' player selects just stay empty until this succeeds */ }
+    } catch { /* player selects stay empty until the squad can be loaded */ }
   }, []);
 
   useEffect(() => { if (authed) loadRefData(); }, [authed, loadRefData]);
@@ -171,6 +202,7 @@ export default function Admin() {
     return () => { active = false; };
   }, [authed, matchId]);
 
+  if (checking) return <div className="admin-empty" role="status">Checking admin sign-in…</div>;
   if (!authed) return <Login onOk={() => setAuthed(true)} />;
 
   const logout = () => { sessionStorage.removeItem('cd_admin'); setAuthed(false); };

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
-import { api, ApiError } from '../src/api.js';
+import { api, ApiError, verifyAdminPassword } from '../src/api.js';
 
 const originalFetch = globalThis.fetch;
 afterEach(() => { globalThis.fetch = originalFetch; });
@@ -30,4 +30,18 @@ test('HTTP failures retain the backend message and status', async () => {
 test('empty success responses return null', async () => {
   globalThis.fetch = async () => new Response(null, { status: 204 });
   assert.equal(await api.get('/teams'), null);
+});
+
+test('admin sign-in verifies the supplied password with the backend', async () => {
+  const controller = new AbortController();
+  globalThis.fetch = async (url, options) => {
+    assert.ok(url.endsWith('/admin/auth'));
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers['X-Admin-Password'], 'test-password');
+    assert.equal(options.signal, controller.signal);
+    return new Response(null, { status: 204 });
+  };
+  assert.equal(await verifyAdminPassword('test-password', { signal: controller.signal }), null);
+  globalThis.fetch = async () => new Response('{"message":"Wrong or missing admin password"}', { status: 401 });
+  await assert.rejects(verifyAdminPassword('wrong'), (error) => error.status === 401);
 });

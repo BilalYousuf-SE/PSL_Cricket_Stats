@@ -17,6 +17,10 @@ public class Partnership {
     @JoinColumn(name = "match_id")
     private Match match;
 
+    // Nullable for existing rows until their innings are backfilled through SQL.
+    @Column(name = "innings")
+    private Integer innings;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "batter1_id")
     private Player batter1;

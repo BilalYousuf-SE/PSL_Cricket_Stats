@@ -8,6 +8,7 @@ const LINKS = [
   { to: '/', label: 'Dashboard', end: true },
   { to: '/teams', label: 'Teams' },
   { to: '/headtohead', label: 'Head-to-Head' },
+  { to: '/matchups', label: 'Matchups' },
   { to: '/players', label: 'Players' },
   { to: '/matches', label: 'Matches' },
   { to: '/records', label: 'Records' },

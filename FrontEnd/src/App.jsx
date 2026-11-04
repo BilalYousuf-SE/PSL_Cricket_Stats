@@ -12,6 +12,7 @@ import Records from './pages/Records.jsx';
 import SeasonStats from './pages/SeasonStats.jsx';
 import InningsDetail from './pages/InningsDetail.jsx';
 import Admin from './pages/Admin.jsx';
+import Matchups from './pages/Matchups.jsx';
 
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/teams" element={<TeamsList />} />
           <Route path="/teams/:id" element={<TeamDetail />} />
           <Route path="/headtohead" element={<HeadToHead />} />
+          <Route path="/matchups" element={<Matchups />} />
           <Route path="/players" element={<PlayersList />} />
           <Route path="/players/:id" element={<PlayerDetail />} />
           <Route path="/matches" element={<MatchesList />} />

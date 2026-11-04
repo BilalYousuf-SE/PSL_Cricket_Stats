@@ -4,6 +4,7 @@ import { useApi } from '../useApi.js';
 import Loading from '../components/Loading.jsx';
 import { ErrorState, EmptyState } from '../components/ErrorState.jsx';
 import DataTable from '../components/DataTable.jsx';
+import { TeamMatchups } from '../components/MatchupViews.jsx';
 import { pick, teamName, matchId, opponentOf, resultText, toArray } from '../fields.js';
 import { AnimatedNumber, Reveal, StickyHeader, useScrolledPast } from '../motion.jsx';
 import '../motion.css';
@@ -60,6 +61,8 @@ export default function TeamDetail() {
             </div>
           </div>
           <div ref={heroEndRef} />
+
+          <TeamMatchups key={id} id={id} />
 
           <h3 className="section-heading">Match History</h3>
           <Reveal className="scorecard">

@@ -16,5 +16,8 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# Leave room for native memory and the connection pool on a 512 MB instance.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=60 -XX:InitialRAMPercentage=15 -XX:+ExitOnOutOfMemoryError"
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

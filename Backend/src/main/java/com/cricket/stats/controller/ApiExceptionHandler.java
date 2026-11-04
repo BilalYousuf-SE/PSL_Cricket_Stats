@@ -3,7 +3,7 @@ package com.cricket.stats.controller;
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,9 +18,9 @@ public class ApiExceptionHandler {
                 .body(Map.of("message", error.getReason() == null ? "Request failed" : error.getReason()));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidation(MethodArgumentNotValidException error) {
+    public Map<String, String> handleValidation(BindException error) {
         String message = error.getBindingResult().getFieldErrors().stream()
                 .map(field -> field.getField() + ": " + field.getDefaultMessage())
                 .collect(java.util.stream.Collectors.joining("; "));

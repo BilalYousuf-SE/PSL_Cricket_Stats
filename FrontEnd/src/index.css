@@ -734,6 +734,30 @@ button:focus-visible {
   padding: 0 20px 16px;
 }
 
+.partnerships-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.partnerships-toolbar p { margin: 0; font-size: 13px; }
+.partnerships-refresh { cursor: pointer; font: inherit; white-space: nowrap; }
+.partnerships-refresh:disabled { opacity: 0.5; cursor: wait; }
+.partnership-heading { padding-bottom: 12px; }
+.partnership-summary { margin: 5px 0 0; font-size: 13px; }
+.partnership-table { overflow-x: auto; }
+.partnership-batters { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.partnership-batters a { color: var(--ink); }
+.partnership-batters a:hover { color: var(--teal-dim); text-decoration: underline; }
+
+@media (max-width: 600px) {
+  .partnership-table .data-table th,
+  .partnership-table .data-table td { padding: 10px 12px; }
+  .partnership-batters { min-width: 130px; }
+}
+
 /* ============================================================
    MISC
    ============================================================ */
