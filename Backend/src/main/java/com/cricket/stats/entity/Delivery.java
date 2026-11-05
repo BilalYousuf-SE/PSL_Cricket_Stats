@@ -56,4 +56,8 @@ public class Delivery {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "player_dismissed_id")
     private Player playerDismissed;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fielder_id")
+    private Player fielder;
 }

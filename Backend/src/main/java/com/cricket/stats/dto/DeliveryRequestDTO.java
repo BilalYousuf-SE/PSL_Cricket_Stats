@@ -2,6 +2,8 @@ package com.cricket.stats.dto;
 
 import lombok.Data;
 import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 
 @Data
 public class DeliveryRequestDTO {
@@ -23,4 +25,14 @@ public class DeliveryRequestDTO {
     private String extraType;
     private String wicketType;
     private Long playerDismissedId; // nullable
+    @Min(1)
+    private Long fielderId;
+    @JsonIgnore
+    private boolean fielderIdProvided;
+
+    @JsonSetter("fielderId")
+    public void setFielderId(Long id) {
+        fielderId = id;
+        fielderIdProvided = true;
+    }
 }

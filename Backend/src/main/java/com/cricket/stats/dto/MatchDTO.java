@@ -3,6 +3,7 @@ package com.cricket.stats.dto;
 import com.cricket.stats.entity.MatchFormat;
 import com.cricket.stats.entity.ResultType;
 import com.cricket.stats.entity.TossDecision;
+import com.cricket.stats.entity.MatchStage;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ public class MatchDTO {
     private LocalDate matchDate;
     private String venue;
     private MatchFormat format;
+    private MatchStage stage;
 
     // Instead of full Team object, just names and IDs
     private Integer teamAId;

@@ -8,6 +8,8 @@ public class DeliveryDTO {
     private Long nonStrikerId;
     private Long bowlerId;
     private Long playerDismissedId;
+    private Long fielderId;
+    private String fielderName;
     private Long deliveryId;
     private Integer matchId;
     private Integer innings;

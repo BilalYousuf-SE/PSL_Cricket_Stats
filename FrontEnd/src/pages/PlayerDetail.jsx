@@ -1,11 +1,12 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApi } from '../useApi.js';
 import Loading from '../components/Loading.jsx';
 import { ErrorState, EmptyState } from '../components/ErrorState.jsx';
 import DataTable from '../components/DataTable.jsx';
+import PlayerPerformance from '../components/PlayerPerformance.jsx';
 import { pick, playerName, toArray } from '../fields.js';
-import { AnimatedNumber, Reveal, StickyHeader, useScrolledPast } from '../motion.jsx';
+import { AnimatedNumber, Reveal, StickyHeader, TabRow, useScrolledPast } from '../motion.jsx';
 import '../motion.css';
 
 // BattingStatsDTO/BowlingStatsDTO give raw totals but no pre-computed
@@ -109,6 +110,8 @@ function MatchHistorySection({ matches }) {
 export default function PlayerDetail() {
   const { id } = useParams();
   const heroEndRef = useRef(null);
+  const [view, setView] = useState('Career');
+  const [performanceOpened, setPerformanceOpened] = useState(false);
 
   const { data, loading, error, reload } = useApi(
     () => [
@@ -164,6 +167,11 @@ export default function PlayerDetail() {
           </div>
           <div ref={heroEndRef} />
 
+          <TabRow tabs={['Career', 'Performance']} active={view} onChange={(next) => {
+            setView(next);
+            if (next === 'Performance') setPerformanceOpened(true);
+          }} />
+          <div hidden={view !== 'Career'}>
           <div className="panel-grid">
             <Reveal className="scorecard">
               <div className="scorecard-header"><h3>Batting</h3></div>
@@ -230,7 +238,12 @@ export default function PlayerDetail() {
             </Reveal>
           </div>
 
-          <h3 className="section-heading section-spacer" id="player-match-history-heading">Matches Played</h3>
+          </div>
+          <div hidden={view !== 'Performance'}>
+            {performanceOpened && <PlayerPerformance key={id} playerId={id} role={player?.role} />}
+          </div>
+
+          <h3 className="section-heading section-spacer" id="player-match-history-heading">{view === 'Performance' ? 'Career match history' : 'Matches Played'}</h3>
           <section className="scorecard" aria-labelledby="player-match-history-heading">
             <div className="scorecard-body">
               <MatchHistorySection matches={matchList} />

@@ -13,6 +13,7 @@ public class MatchMapper {
         dto.setMatchDate(match.getMatchDate());
         dto.setVenue(match.getVenue());
         dto.setFormat(match.getFormat());
+        dto.setStage(match.getStage());
         dto.setResultMargin(match.getResultMargin());
         dto.setResultType(match.getResultType());
         dto.setTossDecision(match.getTossDecision());

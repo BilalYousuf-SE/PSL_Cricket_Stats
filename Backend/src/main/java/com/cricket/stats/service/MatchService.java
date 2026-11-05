@@ -190,6 +190,7 @@ public class MatchService {
         match.setMatchDate(request.getMatchDate());
         match.setVenue(request.getVenue());
         match.setFormat(request.getFormat());
+        if (request.isStageProvided()) match.setStage(request.getStage());
         match.setTossDecision(request.getTossDecision());
         match.setResultMargin(request.getResultMargin());
         match.setResultType(request.getResultType());
@@ -338,6 +339,11 @@ public class MatchService {
     }
 
     private void applyDeliveryRequest(Delivery delivery, DeliveryRequestDTO request) {
+        if (request.isFielderIdProvided()) {
+            delivery.setFielder(request.getFielderId() == null ? null
+                : playerRepository.findById(request.getFielderId())
+                    .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Fielder not found")));
+        }
         delivery.setInnings(request.getInnings());
         delivery.setOverNum(request.getOverNum());
         delivery.setBallNum(request.getBallNum());

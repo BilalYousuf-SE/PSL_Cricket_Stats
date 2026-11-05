@@ -57,6 +57,7 @@ export const ENTITIES = [
       F('matchDate', 'date', 1),
       F('venue', 'text', 1),
       F('format', 'select', 1, { options: FORMAT_OPTIONS }),
+      F('stage', 'select', 0, { label: 'Match stage', options: ['League', 'Qualifier', 'Eliminator', 'SemiFinal', 'Final'] }),
       F('teamAId', 'select', 1, { optionsFrom: 'teams' }),
       F('teamBId', 'select', 1, { optionsFrom: 'teams' }),
       F('seasonId', 'select', 1, { optionsFrom: 'seasons' }),
@@ -136,6 +137,7 @@ export const MATCH_ENTITIES = [
     cols: [
       ['deliveryId', 'ID'], ['innings', 'Inn'], ['overNum', 'Over'], ['ballNum', 'Ball'],
       ['batterName', 'Batter'], ['bowlerName', 'Bowler'], ['runsBatter', 'Runs'], ['wicketType', 'Wicket'],
+      ['fielderName', 'Fielder'],
     ],
     // batterId/nonStrikerId/bowlerId/playerDismissedId are scoped to this
     // match's squad (refData.squad), not the whole player table — far
@@ -153,6 +155,7 @@ export const MATCH_ENTITIES = [
       F('extraType', 'text'),
       F('wicketType', 'text'),
       F('playerDismissedId', 'select', 0, { optionsFrom: 'squad' }),
+      F('fielderId', 'select', 0, { label: 'Fielder (including substitutes)', optionsFrom: 'players' }),
     ],
     resolveInitial: (row) => ({ extraType: row.extrasType ?? '' }),
   },

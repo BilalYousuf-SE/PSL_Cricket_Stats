@@ -1,0 +1,43 @@
+.player-performance { margin-top: 20px; }
+.performance-mode-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.performance-button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--navy-line); border-radius: var(--radius); background: var(--navy); color: var(--paper); font: inherit; font-size: 13px; cursor: pointer; }
+.performance-button:hover, .performance-button[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
+.performance-filters { padding: 16px; border: 1px solid var(--navy-line); border-radius: var(--radius); margin-bottom: 20px; }
+.performance-filter-grid { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.performance-control { display: flex; flex-direction: column; gap: 6px; font-size: 13px; min-width: 0; flex: 1 1 170px; }
+.performance-control > span { color: var(--paper-shade); }
+.performance-control .control-input, .performance-control .control-select { width: 100%; min-height: 40px; max-width: 100%; }
+.performance-control input[type="date"] { color-scheme: dark; }
+.performance-advanced { margin-top: 16px; }
+.performance-advanced summary { cursor: pointer; font-size: 13px; color: var(--gold); }
+.performance-advanced[open] .performance-filter-grid { padding-top: 14px; }
+.performance-filter-note { margin: 12px 0 0; font-size: 12px; color: rgba(250,246,236,.7); }
+.performance-filter-error { color: #ffb8bf; font-size: 13px; }
+.performance-active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.performance-active-filters button { max-width: 100%; overflow-wrap: anywhere; background: var(--navy); color: var(--paper); border: 1px solid var(--navy-line); border-radius: 12px; font: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer; }
+.performance-metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; padding: 20px; }
+.performance-metrics > div { display: flex; flex-direction: column; gap: 4px; background: var(--paper-shade); padding: 12px; border-radius: 4px; }
+.performance-metrics strong { font-family: var(--font-display); color: var(--ink); font-size: 29px; font-variant-numeric: tabular-nums; }
+.performance-metrics span { font-size: 12px; color: var(--ink-soft); }
+.performance-breakdown-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 20px; color: var(--ink); border-top: 1px solid rgba(0,0,0,.1); }
+.performance-breakdown-toolbar label { font-size: 13px; }
+.performance-breakdown-toolbar .control-select { max-width: 260px; color: var(--ink); background: var(--paper-shade); border-color: rgba(0,0,0,.18); }
+.performance-breakdown-toolbar > span { margin-left: auto; font-size: 12px; color: var(--ink-soft); }
+.performance-table-scroll { overflow: auto; max-height: 440px; overscroll-behavior: contain; }
+.performance-table-scroll .data-table { min-width: 620px; }
+.performance-table-scroll thead th { position: sticky; top: 0; z-index: 1; background: var(--paper-shade); }
+.performance-table-scroll td:first-child { min-width: 150px; }
+.performance-text-button { border: none; padding: 0; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.performance-data-note { margin: 0; padding: 12px 20px; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.performance-coverage { padding: 14px 20px; border-top: 1px solid rgba(0,0,0,.1); color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+.performance-coverage summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.performance-results .state-block { color: var(--ink-soft); margin: 16px; border-color: rgba(0,0,0,.15); }
+.performance-results .state-title { color: var(--ink); }
+.performance-table-scroll:focus-visible { outline: 2px solid var(--teal-dim); outline-offset: -2px; }
+.player-performance button:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .performance-control { flex-basis: calc(50% - 6px); }
+  .performance-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 12px; gap: 8px; }
+  .performance-breakdown-toolbar { padding: 12px; }
+  .performance-breakdown-toolbar > span { width: 100%; margin-left: 0; }
+}

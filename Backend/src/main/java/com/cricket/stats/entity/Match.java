@@ -28,6 +28,10 @@ public class Match {
     @Column(name = "format", length = 10)
     private MatchFormat format;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stage", length = 32)
+    private MatchStage stage;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "team_a_id")
     private Team teamA;

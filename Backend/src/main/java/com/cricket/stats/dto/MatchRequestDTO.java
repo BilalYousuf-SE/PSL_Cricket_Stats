@@ -3,6 +3,9 @@ package com.cricket.stats.dto;
 import com.cricket.stats.entity.MatchFormat;
 import com.cricket.stats.entity.ResultType;
 import com.cricket.stats.entity.TossDecision;
+import com.cricket.stats.entity.MatchStage;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 
@@ -29,4 +32,13 @@ public class MatchRequestDTO {
     private Integer resultMargin;   // nullable
     private ResultType resultType;  // nullable
     private Long playerOfMatchId;   // nullable
+    private MatchStage stage;
+    @JsonIgnore
+    private boolean stageProvided;
+
+    @JsonSetter("stage")
+    public void setStage(MatchStage stage) {
+        this.stage = stage;
+        stageProvided = true;
+    }
 }

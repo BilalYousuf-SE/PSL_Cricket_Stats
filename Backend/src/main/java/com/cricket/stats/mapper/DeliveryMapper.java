@@ -45,6 +45,10 @@ public class DeliveryMapper {
             dto.setPlayerDismissedId(delivery.getPlayerDismissed().getId());
             dto.setPlayerDismissedName(delivery.getPlayerDismissed().getFullName());
         }
+        if (delivery.getFielder() != null) {
+            dto.setFielderId(delivery.getFielder().getId());
+            dto.setFielderName(delivery.getFielder().getFullName());
+        }
 
         return dto;
     }
